@@ -1,2 +1,12 @@
 instance/
 venv/
+client/node_modules/
+build/
+dist/
+*.log
+*.env
+.DS_Store
+.idea/
+.vscode/
+*.pyc
+__pycache__/
