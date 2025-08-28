@@ -3,6 +3,7 @@ import App from "../App";
 import Home from "../pages/Home";
 import Register from "../pages/Register";
 import LogIn from "../pages/LogIn";
+import PresidingOfficerDashboard from "../pages/PreddiingOfficerDashboard";
 const Router = () => {
   return (
     <Routes>
@@ -10,6 +11,10 @@ const Router = () => {
         <Route index element={<Home />} />
         <Route path="/sign-up" element={<Register />} />
         <Route path="/login" element={<LogIn />} />
+        <Route
+          path="/officer-dashboard"
+          element={<PresidingOfficerDashboard />}
+        />
       </Route>
     </Routes>
   );

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Presiding Officer Dashboard</title>
+    <!-- Bootstrap CSS for a responsive layout -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Custom CSS for a professional, user-friendly look -->
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #f8fafc; /* A very light, clean background */
+        color: #1f2937; /* Dark gray for good contrast */
+        line-height: 1.6;
+      }
+
+      .navbar {
+        background-color: #ffffff;
+        border-bottom: 1px solid #e5e7eb;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+          0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      }
+
+      .btn-custom-primary {
+        background-color: #3b82f6; /* A professional blue */
+        color: white;
+        border-radius: 0.75rem;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        transition: background-color 0.2s ease-in-out;
+        border: none;
+      }
+
+      .btn-custom-primary:hover {
+        background-color: #2563eb; /* Darker blue on hover */
+      }
+
+      .btn-custom-danger {
+        background-color: #ef4444; /* A vibrant red */
+        color: white;
+        border-radius: 0.75rem;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        transition: background-color 0.2s ease-in-out;
+        border: none;
+      }
+
+      .btn-custom-danger:hover {
+        background-color: #dc2626; /* Darker red on hover */
+      }
+
+      .card {
+        border-radius: 1.5rem;
+        border: none;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+          0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s ease-in-out;
+        background-color: #ffffff;
+      }
+
+      .card:hover {
+        transform: translateY(-4px);
+      }
+
+      .candidate-photo {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 1.5rem;
+        border: 3px solid #3b82f6;
+      }
+
+      .form-control {
+        border-radius: 0.75rem;
+        border: 1px solid #d1d5db;
+      }
+
+      /* Responsive design adjustments */
+      @media (max-width: 768px) {
+        .candidate-photo {
+          width: 60px;
+          height: 60px;
+          margin-right: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body class="d-flex flex-column min-vh-100">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg">
+      <div class="container-fluid px-4 py-2">
+        <a class="navbar-brand fw-bold text-primary fs-4" href="#"
+          >Online Voting System</a
+        >
+        <div class="ms-auto">
+          <button class="btn btn-custom-danger rounded-3 fw-semibold">
+            Log Out
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container my-5 flex-grow-1">
+      <h1 class="display-4 fw-bold mb-3 text-center text-dark">
+        Presiding Officer Dashboard
+      </h1>
+      <p class="lead text-center mb-5 text-muted">
+        Manage election details, candidates, and voting controls.
+      </p>
+
+      <!-- Main Dashboard Content -->
+      <div class="row g-4">
+        <!-- Election Status and Controls Card -->
+        <div class="col-md-6">
+          <div class="card p-5 h-100">
+            <h5 class="fw-bold text-primary mb-4">
+              Election Status & Controls
+            </h5>
+            <div class="d-flex align-items-center mb-3">
+              <span class="fw-medium me-3">Status:</span>
+              <span class="badge bg-warning text-dark py-2 px-3"
+                >Election Not Started</span
+              >
+            </div>
+            <p class="text-muted mb-4">
+              Use the buttons below to control the election.
+            </p>
+            <div class="d-grid gap-2">
+              <button class="btn btn-lg btn-custom-primary">
+                Start Election
+              </button>
+              <button class="btn btn-lg btn-secondary">End Election</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Set Election Date/Time Card -->
+        <div class="col-md-6">
+          <div class="card p-5 h-100">
+            <h5 class="fw-bold text-primary mb-4">Set Election Details</h5>
+            <form>
+              <div class="mb-4">
+                <label for="startDate" class="form-label fw-medium"
+                  >Election Start Date & Time</label
+                >
+                <input
+                  type="datetime-local"
+                  class="form-control"
+                  id="startDate"
+                />
+              </div>
+              <div class="mb-4">
+                <label for="endDate" class="form-label fw-medium"
+                  >Election End Date & Time</label
+                >
+                <input
+                  type="datetime-local"
+                  class="form-control"
+                  id="endDate"
+                />
+              </div>
+              <div class="d-grid">
+                <button type="submit" class="btn btn-custom-primary">
+                  Save Details
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Candidate Management Card -->
+        <div class="col-12">
+          <div class="card p-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h5 class="fw-bold text-primary mb-0">Manage Candidates</h5>
+              <button class="btn btn-custom-primary fw-semibold">
+                Add New Candidate
+              </button>
+            </div>
+
+            <ul class="list-group list-group-flush">
+              <!-- Candidate Item 1 -->
+              <li
+                class="list-group-item bg-transparent d-flex justify-content-between align-items-center py-3 border-0"
+              >
+                <div class="d-flex align-items-center">
+                  <img
+                    src="https://placehold.co/80x80/A3E635/000000?text=A"
+                    class="candidate-photo"
+                    alt="Candidate A photo"
+                  />
+                  <div>
+                    <h6 class="fw-bold mb-0">Candidate A</h6>
+                    <p class="text-muted mb-1">Party X</p>
+                    <small class="text-secondary fst-italic"
+                      >"A new era of progress."</small
+                    >
+                  </div>
+                </div>
+                <button class="btn btn-sm btn-outline-secondary">Edit</button>
+              </li>
+              <!-- Candidate Item 2 -->
+              <li
+                class="list-group-item bg-transparent d-flex justify-content-between align-items-center py-3 border-0"
+              >
+                <div class="d-flex align-items-center">
+                  <img
+                    src="https://placehold.co/80x80/FACC15/000000?text=B"
+                    class="candidate-photo"
+                    alt="Candidate B photo"
+                  />
+                  <div>
+                    <h6 class="fw-bold mb-0">Candidate B</h6>
+                    <p class="text-muted mb-1">Party Y</p>
+                    <small class="text-secondary fst-italic"
+                      >"Building a better future together."</small
+                    >
+                  </div>
+                </div>
+                <button class="btn btn-sm btn-outline-secondary">Edit</button>
+              </li>
+              <!-- Candidate Item 3 -->
+              <li
+                class="list-group-item bg-transparent d-flex justify-content-between align-items-center py-3 border-0"
+              >
+                <div class="d-flex align-items-center">
+                  <img
+                    src="https://placehold.co/80x80/F43F5E/000000?text=C"
+                    class="candidate-photo"
+                    alt="Candidate C photo"
+                  />
+                  <div>
+                    <h6 class="fw-bold mb-0">Candidate C</h6>
+                    <p class="text-muted mb-1">Party Z</p>
+                    <small class="text-secondary fst-italic"
+                      >"Leadership with integrity."</small
+                    >
+                  </div>
+                </div>
+                <button class="btn btn-sm btn-outline-secondary">Edit</button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center text-muted py-4 mt-auto">
+      <p class="mb-0">© 2024 Online Voting System. All rights reserved.</p>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
