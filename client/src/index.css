@@ -128,3 +128,132 @@ body {
 }
 
 /* Login css */
+
+/* voter dashboard  */
+.btn-custom-danger:hover {
+  background-color: #c82333; /* A darker shade on hover */
+}
+
+.btn-custom-green {
+  background-color: #22c55e;
+  color: white;
+  border-radius: 0.75rem;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.btn-custom-green:hover {
+  background-color: #16a34a;
+}
+
+.card {
+  border-radius: 1.5rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: none;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.candidate-card {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.candidate-card:hover {
+  transform: translateY(-5px);
+}
+
+.disabled-vote {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.profile-photo {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #fff;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.candidate-photo {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .candidate-card {
+    margin-bottom: 1.5rem;
+  }
+}
+
+/* presiding officer dashboard */
+.btn-custom-primary {
+  background-color: #3b82f6; /* A professional blue */
+  color: white;
+  border-radius: 0.75rem;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease-in-out;
+  border: none;
+}
+
+.btn-custom-primary:hover {
+  background-color: #2563eb; /* Darker blue on hover */
+}
+
+.btn-custom-danger {
+  background-color: #ef4444; /* A vibrant red */
+  color: white;
+  border-radius: 0.75rem;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease-in-out;
+  border: none;
+}
+
+.btn-custom-danger:hover {
+  background-color: #dc2626; /* Darker red on hover */
+}
+
+.card {
+  border-radius: 1.5rem;
+  border: none;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease-in-out;
+  background-color: #ffffff;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+}
+
+.candidate-photo {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 1.5rem;
+  border: 3px solid #3b82f6;
+}
+
+.form-control {
+  border-radius: 0.75rem;
+  border: 1px solid #d1d5db;
+}
+
+/* Responsive design adjustments */
+@media (max-width: 768px) {
+  .candidate-photo {
+    width: 60px;
+    height: 60px;
+    margin-right: 1rem;
+  }
+}
