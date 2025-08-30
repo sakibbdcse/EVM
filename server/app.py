@@ -22,8 +22,8 @@ def register():
     username = data.get("username")
     password = data.get("password")
     email = data.get("email")
-    first_name = data.get("first_name")
-    last_name = data.get("last_name")
+    first_name = data.get("firstName")
+    last_name = data.get("lastName")
     phone = data.get("phone")
 
     # Optional fields

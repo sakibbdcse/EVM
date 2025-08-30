@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import axios, { AxiosError } from "axios";
 import { BASE_URL } from "../config/BaseUrl";
-
+import { useNavigate } from "react-router-dom";
 // Main form data type (excluding confirm password)
 interface FormData {
   email: string;
@@ -23,6 +23,7 @@ interface PasswordInput {
 }
 
 const Register = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>({
     email: "",
     firstName: "",
@@ -64,25 +65,13 @@ const Register = () => {
     }
 
     try {
-      // Map camelCase frontend to snake_case backend
-      const submitData = {
-        email: formData.email,
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        username: formData.username,
-        phone: formData.phone,
-        gender: formData.gender,
-        nid: formData.nid,
-        birthdate: formData.birthdate,
-        password: passwordInput.password,
-      };
+      const submitData = { ...formData, password: passwordInput.password };
 
-      const response = await axios.post(`${BASE_URL}/register`, submitData, {
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await axios.post(`${BASE_URL}/register`, submitData);
 
       alert(response.data.message || "Registration successful!");
       console.log("✅ User registered:", response.data);
+      navigate("/login");
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError<{ error: string }>;
@@ -193,7 +182,6 @@ const Register = () => {
                 />
               </div>
             </div>
-
             <div className="mb-3">
               <input
                 type="text"
@@ -238,7 +226,7 @@ const Register = () => {
           <p className="text-muted">
             Already have an account?{" "}
             <Link
-              to="/login"
+              to="/login" // ✅ make sure route matches your router
               className="text-primary text-decoration-none fw-semibold"
             >
               Log in
