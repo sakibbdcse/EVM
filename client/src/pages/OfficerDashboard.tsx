@@ -1,4 +1,4 @@
-const PresidingOfficerDashboard = () => {
+const OfficerDashboard = () => {
   return (
     <>
       <div className="container my-5 flex-grow-1">
@@ -147,4 +147,4 @@ const PresidingOfficerDashboard = () => {
   );
 };
 
-export default PresidingOfficerDashboard;
+export default OfficerDashboard;
