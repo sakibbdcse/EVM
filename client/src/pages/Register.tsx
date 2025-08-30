@@ -67,7 +67,10 @@ const Register = () => {
     try {
       const submitData = { ...formData, password: passwordInput.password };
 
-      const response = await axios.post(`${BASE_URL}/register`, submitData);
+      const response = await axios.post(
+        `${BASE_URL}/auth/register`,
+        submitData
+      );
 
       alert(response.data.message || "Registration successful!");
       console.log("✅ User registered:", response.data);
