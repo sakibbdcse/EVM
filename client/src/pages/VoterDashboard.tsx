@@ -29,15 +29,12 @@ const MOCK_CANDIDATES = [
 ];
 
 const VoterDashboard = () => {
-  // 👇 Grab user from Redux (authSlice)
   const { user } = useSelector((state: RootState) => state.auth);
 
   const [electionData] = useState(MOCK_ELECTION);
   const [candidates, setCandidates] = useState(MOCK_CANDIDATES);
   const [isVoting, setIsVoting] = useState(false);
-
   if (!user) return <p className="text-center mt-5">Loading user data...</p>;
-
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString();
 
@@ -48,7 +45,7 @@ const VoterDashboard = () => {
   };
 
   const handleVote = (candidateId: string) => {
-    if (user.hasVoted) return; // prevent double voting
+    if (user.hasVoted) return;
     setIsVoting(true);
     setTimeout(() => {
       setCandidates((prev) =>
@@ -56,7 +53,6 @@ const VoterDashboard = () => {
           c.id === candidateId ? { ...c, votes: c.votes + 1 } : c
         )
       );
-      // ⚡ TODO: dispatch Redux action to update hasVoted
       setIsVoting(false);
       alert("✅ Vote cast successfully!");
     }, 1000);
@@ -96,7 +92,6 @@ const VoterDashboard = () => {
           </div>
         </div>
       </div>
-
       <div className="container">
         <div className="row g-4">
           {/* Profile Card */}
