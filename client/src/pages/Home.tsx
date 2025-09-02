@@ -5,6 +5,7 @@ import { logout, setUser, type User } from "../redux/authSlice";
 import { useEffect } from "react";
 import axios from "axios";
 import { BASE_URL } from "../config/BaseUrl";
+import ElectionStatus from "../components/ElectionStatus";
 const Home = () => {
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
@@ -38,34 +39,14 @@ const Home = () => {
     <>
       <div className="container my-5 flex-grow-1">
         <h1 className="display-4 fw-bold mb-3 text-center">Voter Dashboard</h1>
-        <p className="lead text-center mb-5">
-          Your home for all things election-related.
-        </p>
-
         <div className="row mb-4">
-          <div className="col-12">
-            <div className="card p-4 shadow-sm text-center">
-              <h5 className="fw-bold text-success mb-3">
-                Election Status: Student Council President
-              </h5>
-              <p className="mb-1">
-                <span className="fw-semibold">Start Time:</span>{" "}
-                <span>8/25/2024, 3:00:00 PM</span>
-              </p>
-              <p className="mb-0">
-                <span className="fw-semibold">End Time:</span>{" "}
-                <span>8/26/2024, 11:00:00 PM</span>
-              </p>
-            </div>
-          </div>
+          <ElectionStatus />
         </div>
 
         <div className="row">
           <div className="col-md-6 mb-4">
             <div className="card p-4 shadow-sm h-100 position-relative">
               <h5 className="fw-bold text-success mb-3">Your Profile</h5>
-
-              {/* Edit button */}
               <button
                 className="btn btn-sm btn-outline-success position-absolute top-0 end-0 m-3"
                 onClick={() => console.log("Edit clicked")}
