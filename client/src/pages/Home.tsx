@@ -9,6 +9,8 @@ import ElectionStatus from "../components/ElectionStatus";
 import type { RootState } from "../redux/store";
 import { logout, setUser, type User } from "../redux/authSlice";
 import { BASE_URL } from "../config/BaseUrl";
+import ElectionStatusSet from "../components/ElectionStatusSet";
+import ManageCandidates from "../components/ManageCandidates";
 
 const Home = () => {
   const dispatch = useDispatch();
@@ -35,7 +37,7 @@ const Home = () => {
       } catch (err) {
         console.error("Fetch user failed:", err);
         dispatch(logout());
-        navigate("/login"); // 🚀 redirect if fetching user fails
+        navigate("/login");
       }
     };
 
@@ -51,7 +53,15 @@ const Home = () => {
 
       {/* Election Countdown */}
       <div className="row mb-4">
-        <ElectionStatus />
+        {user.role === "voter" ? (
+          <ElectionStatus />
+        ) : user.role === "admin" ? (
+          <ElectionStatusSet />
+        ) : user.role === "presiding_officer" ? (
+          <ElectionStatusSet />
+        ) : (
+          <div>No Role Assigned</div>
+        )}
       </div>
 
       <div className="row">
@@ -121,18 +131,33 @@ const Home = () => {
         </div>
 
         {/* Active Elections */}
+
         <div className="col-md-6 mb-4">
-          <div className="card p-4 shadow-sm h-100">
-            <h5 className="fw-bold text-success mb-3">Active Elections</h5>
-            <p className="text-muted">
-              Click on a candidate to cast your vote.
-            </p>
-            <div className="row">
-              <Candidate />
-              <Candidate />
-              <Candidate />
+          {user.role === "voter" ? (
+            <div className="card p-4 shadow-sm h-100">
+              <h5 className="fw-bold text-success mb-3">Active Elections</h5>
+              <p className="text-muted">
+                Click on a candidate to cast your vote.
+              </p>
+              <div className="row">
+                <Candidate />
+                <Candidate />
+                <Candidate />
+              </div>
             </div>
-          </div>
+          ) : user.role === "admin" ? (
+            <div className="card p-4 shadow-sm h-100">
+              <ManageCandidates />
+            </div>
+          ) : user.role === "presiding_officer" ? (
+            <div className="card p-4 shadow-sm h-100">
+              <ManageCandidates />
+            </div>
+          ) : (
+            <div className="card p-4 shadow-sm h-100">
+              <h5 className="fw-bold text-muted mb-3">No Role Assigned</h5>
+            </div>
+          )}
         </div>
       </div>
     </div>
