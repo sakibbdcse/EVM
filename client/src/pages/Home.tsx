@@ -21,7 +21,7 @@ const Home = () => {
     const localToken = token || localStorage.getItem("token");
 
     if (!localToken) {
-      navigate("/login"); // 🚀 redirect if no token
+      navigate("/login"); //
       return;
     }
 
