@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
 from db_connections import init_app
-
+from routes.elections import elections_bp
 # Import blueprints
 from routes.auth import auth_bp
 from routes.user import user_bp
@@ -13,6 +13,7 @@ init_app(app)
 # Register blueprints
 app.register_blueprint(auth_bp, url_prefix="/auth")
 app.register_blueprint(user_bp, url_prefix="/user")
+app.register_blueprint(elections_bp, url_prefix="/elections")
 
 # ------------------ Run Server ------------------
 if __name__ == "__main__":

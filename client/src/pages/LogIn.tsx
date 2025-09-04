@@ -4,7 +4,7 @@ import axios, { AxiosError } from "axios";
 import { BASE_URL } from "../config/BaseUrl";
 
 interface LoginData {
-  loginId: string; // username, email, or phone
+  loginId: string;
   password: string;
 }
 
@@ -61,7 +61,7 @@ const LogIn = () => {
       localStorage.setItem("user", JSON.stringify(user));
 
       alert(response.data.message || "Login successful!");
-      navigate("/dashboard");
+      navigate("/");
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         const axiosError = err as AxiosError<{ error: string }>;
