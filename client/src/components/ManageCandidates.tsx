@@ -8,7 +8,6 @@ const ManageCandidates = () => {
             Add New Candidate
           </button>
         </div>
-
         <ul className="list-group list-group-flush">
           <li className="list-group-item bg-transparent d-flex justify-content-between align-items-center py-3 border-0">
             <div className="d-flex align-items-center">
