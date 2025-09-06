@@ -13,7 +13,7 @@ init_app(app)
 # Register blueprints
 app.register_blueprint(auth_bp, url_prefix="/auth")
 app.register_blueprint(user_bp, url_prefix="/user")
-app.register_blueprint(elections_bp, url_prefix="/elections")
+app.register_blueprint(elections_bp, url_prefix="")
 
 # ------------------ Run Server ------------------
 if __name__ == "__main__":
