@@ -23,7 +23,7 @@ const Home = () => {
     const localToken = token || localStorage.getItem("token");
 
     if (!localToken) {
-      navigate("/login"); //
+      navigate("/login");
       return;
     }
 
@@ -49,7 +49,9 @@ const Home = () => {
 
   return (
     <div className="container my-5 flex-grow-1">
-      <h1 className="display-4 fw-bold mb-3 text-center">Voter Dashboard</h1>
+      <h1 className="display-4 fw-bold mb-3 text-center">
+        {user.role} Dashboard
+      </h1>
 
       {/* Election Countdown */}
       <div className="row mb-4">
@@ -120,12 +122,16 @@ const Home = () => {
                 Role:
                 <span className="badge bg-warning">{user.role}</span>
               </li>
-              <li className="list-group-item d-flex justify-content-between align-items-center">
-                Status:
-                <span className="badge bg-success" id="votingStatus">
-                  Eligible to Vote
-                </span>
-              </li>
+              {!(
+                user.role === "voter" || user.role === "presiding_officer"
+              ) && (
+                <li className="list-group-item d-flex justify-content-between align-items-center">
+                  Status:
+                  <span className="badge bg-success" id="votingStatus">
+                    Eligible to Vote
+                  </span>
+                </li>
+              )}
             </ul>
           </div>
         </div>
