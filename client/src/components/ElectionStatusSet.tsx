@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
-import type { ChangeEvent } from "react";
-import type { FormEvent } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import axios from "axios";
 import { BASE_URL } from "../config/BaseUrl";
+import ElectionStatus from "./ElectionStatus";
 
-// ✅ Define Address type
 interface Address {
   id: number;
   division: string;
@@ -15,13 +14,14 @@ interface Address {
 }
 
 const ElectionStatusSet = () => {
+  const [title, setTitle] = useState<string>("");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const [isActive, setIsActive] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>("");
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string>("");
 
-  // ✅ Fetch addresses from backend
   useEffect(() => {
     const fetchAddresses = async () => {
       try {
@@ -38,18 +38,18 @@ const ElectionStatusSet = () => {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!selectedAddress) {
-      setStatusMessage("Please select an address");
+    if (!selectedAddress || !title) {
+      setStatusMessage("Please fill all required fields");
       return;
     }
 
     try {
       const response = await axios.post(`${BASE_URL}/elections`, {
-        title: "General Election 2025",
+        title,
         address_id: selectedAddress,
         start_date: startDate,
         end_date: endDate,
-        is_active: 0,
+        is_active: isActive ? 1 : 0,
       });
 
       setStatusMessage(response.data.message || "Election saved successfully");
@@ -71,32 +71,26 @@ const ElectionStatusSet = () => {
   return (
     <>
       <div className="col-md-6">
-        <div className="card p-5 h-100">
-          <h5 className="fw-bold text-primary mb-4">
-            Election Status & Controls
-          </h5>
-          <div className="d-flex align-items-center mb-3">
-            <span className="fw-medium me-3">Status:</span>
-            <span className="badge bg-warning text-dark py-2 px-3">
-              Election Not Started
-            </span>
-          </div>
-          <p className="text-muted mb-4">
-            Use the buttons below to control the election.
-          </p>
-          <div className="d-grid gap-2">
-            <button className="btn btn-lg btn-custom-primary">
-              Start Election
-            </button>
-            <button className="btn btn-lg btn-secondary">End Election</button>
-          </div>
-        </div>
+        <ElectionStatus />
       </div>
 
       <div className="col-md-6">
         <div className="card p-5 h-100">
           <h5 className="fw-bold text-primary mb-4">Set Election Details</h5>
           <form onSubmit={handleSubmit}>
+            {/* Election Title */}
+            <div className="mb-4">
+              <label className="form-label fw-medium">Election Title</label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Enter election name"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+              />
+            </div>
+
             {/* Start Date */}
             <div className="mb-4">
               <label className="form-label fw-medium">
@@ -143,6 +137,20 @@ const ElectionStatusSet = () => {
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Active Checkbox */}
+            <div className="form-check mb-4">
+              <input
+                type="checkbox"
+                className="form-check-input"
+                id="isActive"
+                checked={isActive}
+                onChange={(e) => setIsActive(e.target.checked)}
+              />
+              <label htmlFor="isActive" className="form-check-label">
+                Set as Active Election
+              </label>
             </div>
 
             {/* Save Button */}
