@@ -127,7 +127,7 @@ const ElectionStatus: React.FC = () => {
       {/* Active Election Countdown */}
       <div className="card p-4 shadow-sm text-center mb-4">
         <h5 className="fw-bold text-success mb-3">
-          Election Status: {election ? election.title : "Loading..."}
+          {election ? election.title : "No named Election"}
         </h5>
         {!election ? (
           <p className="text-muted">Fetching election data...</p>
