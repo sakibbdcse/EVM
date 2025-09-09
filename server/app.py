@@ -6,6 +6,7 @@ from routes.elections import elections_bp
 from routes.auth import auth_bp
 from routes.user import user_bp
 from routes.address import address_bp
+from routes.candidates import candidates_bp
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:5173"])
 init_app(app)
@@ -15,7 +16,7 @@ app.register_blueprint(auth_bp, url_prefix="/auth")
 app.register_blueprint(user_bp, url_prefix="/user")
 app.register_blueprint(elections_bp, url_prefix="")
 app.register_blueprint(address_bp, url_prefix="")
-
+app.register_blueprint(candidates_bp)
 # ------------------ Run Server ------------------
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
