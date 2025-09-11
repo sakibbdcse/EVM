@@ -1,4 +1,3 @@
-
 from flask import Blueprint, request, jsonify
 import jwt
 import os
@@ -14,7 +13,6 @@ user_bp = Blueprint("user", __name__)
 @user_bp.route("/current-user", methods=["GET"])
 def current_user():
     token = request.headers.get("Authorization")
-    print("Token received:", token)
     if not token or not token.startswith("Bearer "):
         return jsonify({"error": "No token found"}), 401
 
@@ -28,8 +26,7 @@ def current_user():
         if conn is None:
             return jsonify({"error": "DB connection failed"}), 500
         cursor = conn.cursor()
-        
-        # Select all needed columns
+
         cursor.execute("""
             SELECT id, username, first_name, last_name, email, phone, gender, birthdate, nid, role
             FROM users
@@ -56,8 +53,63 @@ def current_user():
     except jwt.ExpiredSignatureError:
         return jsonify({"error": "Token expired"}), 401
     except Exception as e:
-        print(e)
+        print("JWT decode error:", e)
         return jsonify({"error": "Invalid token"}), 401
     finally:
-        if cursor: cursor.close()
-        if conn: conn.close()
+        if "cursor" in locals() and cursor: cursor.close()
+        if "conn" in locals() and conn: conn.close()
+
+
+# ------------------ Get All Users (Admin / Presiding Officer) ------------------
+@user_bp.route("/all", methods=["GET"])
+def get_all_users():
+    token = request.headers.get("Authorization")
+    if not token or not token.startswith("Bearer "):
+        return jsonify({"error": "No token found"}), 401
+
+    token = token.split(" ")[1]
+
+    try:
+        data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        role = data.get("role")
+
+        # ✅ Allow only admin or presiding_officer
+        if role not in ("admin", "presiding_officer"):
+            return jsonify({"error": "Forbidden - Only Admin/Presiding Officer"}), 403
+
+        conn = get_db_connection()
+        if conn is None:
+            return jsonify({"error": "DB connection failed"}), 500
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT id, username, first_name, last_name, email, phone, gender, birthdate, nid, role
+            FROM users
+        """)
+        rows = cursor.fetchall()
+
+        users = []
+        for row in rows:
+            users.append({
+                "id": row[0],
+                "username": row[1],
+                "first_name": row[2],
+                "last_name": row[3],
+                "email": row[4],
+                "phone": row[5],
+                "gender": row[6],
+                "birthdate": row[7],
+                "nid": row[8],
+                "role": row[9]
+            })
+
+        return jsonify(users), 200
+
+    except jwt.ExpiredSignatureError:
+        return jsonify({"error": "Token expired"}), 401
+    except Exception as e:
+        print("JWT decode error:", e)
+        return jsonify({"error": "Invalid token"}), 401
+    finally:
+        if "cursor" in locals() and cursor: cursor.close()
+        if "conn" in locals() and conn: conn.close()
