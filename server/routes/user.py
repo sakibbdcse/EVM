@@ -3,10 +3,8 @@ import jwt
 import os
 from db_connections import get_db_connection
 from dotenv import load_dotenv
-
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
-
 user_bp = Blueprint("user", __name__)
 
 # ------------------ Current User ------------------
@@ -72,8 +70,6 @@ def get_all_users():
     try:
         data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         role = data.get("role")
-
-        # ✅ Allow only admin or presiding_officer
         if role not in ("admin", "presiding_officer"):
             return jsonify({"error": "Forbidden - Only Admin/Presiding Officer"}), 403
 

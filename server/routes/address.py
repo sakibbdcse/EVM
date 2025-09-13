@@ -7,7 +7,6 @@ address_bp = Blueprint("address", __name__)
 @address_bp.route("/addresses", methods=["POST"])
 def create_address():
     data = request.get_json()
-
     division = data.get("division")
     district = data.get("district")
     city = data.get("city")

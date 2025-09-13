@@ -4,7 +4,6 @@ from functools import wraps
 import jwt, os
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
-
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
 
