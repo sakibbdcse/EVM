@@ -11,7 +11,7 @@ export interface User {
   birthdate: string;
   is_verified: boolean;
   nid: string;
-  role: "voter" | "presiding_officer" | "admin" | "superadmin";
+  role: "voter" | "presiding_officer" | "admin";
 }
 
 interface AuthState {
