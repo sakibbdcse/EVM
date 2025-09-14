@@ -11,6 +11,7 @@ import { logout, setUser, type User } from "../redux/authSlice";
 import { BASE_URL } from "../config/BaseUrl";
 import ElectionStatusSet from "../components/ElectionStatusSet";
 import ManageCandidates from "../components/ManageCandidates";
+import Profile from "../components/Profile";
 
 const Home = () => {
   const dispatch = useDispatch();
@@ -68,74 +69,7 @@ const Home = () => {
 
       <div className="row">
         {/* Profile Section */}
-        <div className="col-md-6 mb-4">
-          <div className="card p-4 shadow-sm h-100 position-relative">
-            <h5 className="fw-bold text-success mb-3">Your Profile</h5>
-            <button
-              className="btn btn-sm btn-outline-success position-absolute top-0 end-0 m-3"
-              onClick={() => console.log("Edit clicked")}
-            >
-              Edit
-            </button>
-
-            <div className="text-center mb-3">
-              <img
-                className="profile-photo"
-                alt="Voter Photo"
-                src="/images/profavater.jpg"
-              />
-            </div>
-            <ul className="list-group list-group-flush">
-              <li className="list-group-item d-flex justify-content-between align-items-center">
-                Name:
-                <span className="text-muted">
-                  {user.first_name} {user.last_name} ({user.username})
-                </span>
-              </li>
-              <li className="list-group-item d-flex justify-content-between align-items-center">
-                Email:
-                <span className="text-muted">{user.email}</span>
-              </li>
-              <li className="list-group-item d-flex justify-content-between align-items-center">
-                Phone:
-                <span className="text-muted text-end">{user.phone}</span>
-              </li>
-              <li className="list-group-item d-flex justify-content-between align-items-center">
-                NID:
-                <span className="text-muted text-end">{user.nid}</span>
-              </li>
-              <li className="list-group-item d-flex justify-content-between align-items-center">
-                Gender:
-                <span className="text-muted text-end">{user.gender}</span>
-              </li>
-              <li className="list-group-item d-flex justify-content-between align-items-center">
-                Birthdate:
-                <span className="text-muted text-end">{user.birthdate}</span>
-              </li>
-              <li className="list-group-item d-flex justify-content-between align-items-center">
-                Address:
-                <span className="text-muted text-end">
-                  123 Main Street, Anytown, State, 12345
-                </span>
-              </li>
-              <li className="list-group-item d-flex justify-content-between align-items-center">
-                Role:
-                <span className="badge bg-warning">{user.role}</span>
-              </li>
-              {!(
-                user.role === "voter" || user.role === "presiding_officer"
-              ) && (
-                <li className="list-group-item d-flex justify-content-between align-items-center">
-                  Status:
-                  <span className="badge bg-success" id="votingStatus">
-                    Eligible to Vote
-                  </span>
-                </li>
-              )}
-            </ul>
-          </div>
-        </div>
-
+        <Profile user={user} />
         {/* Active Elections */}
 
         <div className="col-md-6 mb-4">
