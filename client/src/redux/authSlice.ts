@@ -1,7 +1,16 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
+export interface Address {
+  id: number;
+  street: string;
+  city: string;
+  state: string;
+  country: string;
+  postal_code: string;
+}
+
 export interface User {
-  id: string;
+  id: number;
   username: string;
   first_name: string;
   last_name: string;
@@ -12,6 +21,8 @@ export interface User {
   is_verified: boolean;
   nid: string;
   role: "voter" | "presiding_officer" | "admin";
+  address?: Address; // 👈 full address object instead of id
+  photo?: string;
 }
 
 interface AuthState {

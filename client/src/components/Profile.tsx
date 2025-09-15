@@ -22,11 +22,8 @@ type User = {
   birthdate: string;
   role: string;
   address_id?: number;
-  photo?: string;
+  photo?: string | File;
 };
-
-// FormData type for editing
-type EditableUser = Omit<User, "photo"> & { photo?: string | File };
 
 type ProfileProps = {
   user: User;
@@ -35,10 +32,11 @@ type ProfileProps = {
 
 const Profile = ({ user, token }: ProfileProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<EditableUser>(user);
-  const [changedFields, setChangedFields] = useState<Partial<EditableUser>>({});
+  const [formData, setFormData] = useState<User>(user);
+  const [changedFields, setChangedFields] = useState<Partial<User>>({});
   const [addresses, setAddresses] = useState<Address[]>([]);
 
+  // Fetch addresses
   useEffect(() => {
     const fetchAddresses = async () => {
       try {
@@ -54,6 +52,7 @@ const Profile = ({ user, token }: ProfileProps) => {
     fetchAddresses();
   }, [token]);
 
+  // Handle text/select inputs
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -62,6 +61,7 @@ const Profile = ({ user, token }: ProfileProps) => {
     setChangedFields((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Handle image upload
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -71,6 +71,7 @@ const Profile = ({ user, token }: ProfileProps) => {
     }
   };
 
+  // Save changes
   const handleSave = async () => {
     if (!Object.keys(changedFields).length) {
       setIsEditing(false);
@@ -111,18 +112,6 @@ const Profile = ({ user, token }: ProfileProps) => {
     }
   };
 
-  const fields: { label: string; name: keyof EditableUser }[] = [
-    { label: "First Name", name: "first_name" },
-    { label: "Last Name", name: "last_name" },
-    { label: "Username", name: "username" },
-    { label: "Email", name: "email" },
-    { label: "Phone", name: "phone" },
-    { label: "NID", name: "nid" },
-    { label: "Gender", name: "gender" },
-    { label: "Birthdate", name: "birthdate" },
-    { label: "Address", name: "address_id" },
-  ];
-
   return (
     <div className="col-md-6 mb-4">
       <div className="card p-4 shadow-sm h-100 position-relative">
@@ -140,8 +129,10 @@ const Profile = ({ user, token }: ProfileProps) => {
             className="profile-photo rounded-circle"
             alt="Profile"
             src={
-              typeof formData.photo === "string"
-                ? formData.photo
+              formData.photo
+                ? typeof formData.photo === "string"
+                  ? formData.photo
+                  : "/images/profavater.jpg"
                 : "/images/profavater.jpg"
             }
             width={120}
@@ -159,80 +150,164 @@ const Profile = ({ user, token }: ProfileProps) => {
         </div>
 
         <ul className="list-group list-group-flush">
-          {fields.map((field) => {
-            const value = formData[field.name];
-            return (
-              <li
-                key={field.name}
-                className="list-group-item d-flex justify-content-between align-items-center"
+          <li className="list-group-item d-flex justify-content-between align-items-center">
+            First Name:
+            {isEditing ? (
+              <input
+                type="text"
+                name="first_name"
+                value={formData.first_name}
+                onChange={handleChange}
+                className="form-control w-50"
+              />
+            ) : (
+              <span className="text-muted">{formData.first_name}</span>
+            )}
+          </li>
+
+          <li className="list-group-item d-flex justify-content-between align-items-center">
+            Last Name:
+            {isEditing ? (
+              <input
+                type="text"
+                name="last_name"
+                value={formData.last_name}
+                onChange={handleChange}
+                className="form-control w-50"
+              />
+            ) : (
+              <span className="text-muted">{formData.last_name}</span>
+            )}
+          </li>
+
+          <li className="list-group-item d-flex justify-content-between align-items-center">
+            Username:
+            {isEditing ? (
+              <input
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                className="form-control w-50"
+              />
+            ) : (
+              <span className="text-muted">{formData.username}</span>
+            )}
+          </li>
+
+          <li className="list-group-item d-flex justify-content-between align-items-center">
+            Email:
+            {isEditing ? (
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className="form-control w-50"
+              />
+            ) : (
+              <span className="text-muted">{formData.email}</span>
+            )}
+          </li>
+
+          <li className="list-group-item d-flex justify-content-between align-items-center">
+            Phone:
+            {isEditing ? (
+              <input
+                type="text"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                className="form-control w-50"
+              />
+            ) : (
+              <span className="text-muted">{formData.phone}</span>
+            )}
+          </li>
+
+          <li className="list-group-item d-flex justify-content-between align-items-center">
+            NID:
+            {isEditing ? (
+              <input
+                type="text"
+                name="nid"
+                value={formData.nid}
+                onChange={handleChange}
+                className="form-control w-50"
+              />
+            ) : (
+              <span className="text-muted">{formData.nid}</span>
+            )}
+          </li>
+
+          <li className="list-group-item d-flex justify-content-between align-items-center">
+            Gender:
+            {isEditing ? (
+              <select
+                name="gender"
+                value={formData.gender}
+                onChange={handleChange}
+                className="form-select w-50"
               >
-                {field.label}:
-                {isEditing ? (
-                  field.name === "gender" ? (
-                    <select
-                      name="gender"
-                      value={formData.gender}
-                      onChange={handleChange}
-                      className="form-select w-50"
-                    >
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                    </select>
-                  ) : field.name === "birthdate" ? (
-                    <input
-                      type="date"
-                      name="birthdate"
-                      value={formData.birthdate}
-                      onChange={handleChange}
-                      className="form-control w-50"
-                    />
-                  ) : field.name === "address_id" ? (
-                    <select
-                      name="address_id"
-                      value={formData.address_id ?? ""}
-                      onChange={handleChange}
-                      className="form-select w-50"
-                    >
-                      <option value="">Select Address</option>
-                      {addresses.map((addr) => (
-                        <option key={addr.id} value={addr.id}>
-                          {`${addr.division}, ${addr.district}, ${addr.city}, ${addr.village}`}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      type={field.name === "email" ? "email" : "text"}
-                      name={field.name}
-                      value={String(value ?? "")}
-                      onChange={handleChange}
-                      className="form-control w-50"
-                    />
-                  )
-                ) : field.name === "address_id" ? (
-                  <span className="text-muted">
-                    {addresses.find((a) => a.id === formData.address_id)
-                      ? `${
-                          addresses.find((a) => a.id === formData.address_id)
-                            ?.division
-                        }, ${
-                          addresses.find((a) => a.id === formData.address_id)
-                            ?.district
-                        }, ${
-                          addresses.find((a) => a.id === formData.address_id)
-                            ?.city
-                        }, ${
-                          addresses.find((a) => a.id === formData.address_id)
-                            ?.village
-                        }`
-                      : "-"}
-                  </span>
-                ) : (
-                  <span className="text-muted">{String(value ?? "")}</span>
-                )}
-              </li>
-            );
-          })}
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            ) : (
+              <span className="text-muted">{formData.gender}</span>
+            )}
+          </li>
+
+          <li className="list-group-item d-flex justify-content-between align-items-center">
+            Birthdate:
+            {isEditing ? (
+              <input
+                type="date"
+                name="birthdate"
+                value={formData.birthdate}
+                onChange={handleChange}
+                className="form-control w-50"
+              />
+            ) : (
+              <span className="text-muted">{formData.birthdate}</span>
+            )}
+          </li>
+
+          <li className="list-group-item d-flex justify-content-between align-items-center">
+            Address:
+            {isEditing ? (
+              <select
+                name="address_id"
+                value={formData.address_id ?? ""}
+                onChange={handleChange}
+                className="form-select w-50"
+              >
+                <option value="">Select Address</option>
+                {addresses.map((addr) => (
+                  <option key={addr.id} value={addr.id}>
+                    {`${addr.division}, ${addr.district}, ${addr.city}, ${addr.village}`}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span className="text-muted">
+                {addresses.find((a) => a.id === formData.address_id)
+                  ? `${
+                      addresses.find((a) => a.id === formData.address_id)
+                        ?.division
+                    }, ${
+                      addresses.find((a) => a.id === formData.address_id)
+                        ?.district
+                    }, ${
+                      addresses.find((a) => a.id === formData.address_id)?.city
+                    }, ${
+                      addresses.find((a) => a.id === formData.address_id)
+                        ?.village
+                    }`
+                  : "-"}
+              </span>
+            )}
+          </li>
 
           <li className="list-group-item d-flex justify-content-between align-items-center">
             Role:
