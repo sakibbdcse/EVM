@@ -23,6 +23,7 @@ type User = {
   role: string;
   address_id?: number;
   photo?: string | File;
+  photo_url?: string;
 };
 
 type ProfileProps = {
@@ -35,24 +36,28 @@ const Profile = ({ user, token }: ProfileProps) => {
   const [formData, setFormData] = useState<User>(user);
   const [changedFields, setChangedFields] = useState<Partial<User>>({});
   const [addresses, setAddresses] = useState<Address[]>([]);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(
+    user.photo_url || null
+  );
 
-  // Fetch addresses
+  // Fetch addresses on mount
   useEffect(() => {
     const fetchAddresses = async () => {
       try {
         const res = await fetch(`${BASE_URL}/addresses`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        if (!res.ok) throw new Error("Failed to fetch addresses");
         const data: Address[] = await res.json();
         setAddresses(data);
       } catch (err) {
-        console.error("Failed to fetch addresses", err);
+        console.error("Failed to fetch addresses:", err);
       }
     };
     fetchAddresses();
   }, [token]);
 
-  // Handle input/select changes
+  // Handle input changes
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -61,12 +66,13 @@ const Profile = ({ user, token }: ProfileProps) => {
     setChangedFields((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle image upload
+  // Handle photo upload
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setFormData((prev) => ({ ...prev, photo: file }));
       setChangedFields((prev) => ({ ...prev, photo: file }));
+      setPhotoPreview(URL.createObjectURL(file));
     }
   };
 
@@ -95,28 +101,32 @@ const Profile = ({ user, token }: ProfileProps) => {
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || "Failed to update user");
+        throw new Error(err.error || "Failed to update profile");
       }
 
       const updatedUser: User = await res.json();
       setFormData(updatedUser);
       setChangedFields({});
       setIsEditing(false);
-      alert("Profile updated successfully!");
+
+      // Update photo preview from backend URL
+      if (updatedUser.photo_url) {
+        setPhotoPreview(updatedUser.photo_url);
+      }
+
+      alert("✅ Profile updated successfully!");
     } catch (err: unknown) {
       console.error("Update error:", err);
       const message =
         err instanceof Error ? err.message : "Failed to update profile.";
-      alert(message);
+      alert(`❌ ${message}`);
     }
   };
 
-  // Convert photo to string URL for <img>
+  // Helper to get photo URL
   const getPhotoSrc = () => {
-    if (!formData.photo) return "/images/profavater.jpg";
-    return typeof formData.photo === "string"
-      ? formData.photo
-      : URL.createObjectURL(formData.photo);
+    if (photoPreview) return photoPreview;
+    return "/images/profavater.jpg"; // fallback
   };
 
   return (
@@ -124,6 +134,7 @@ const Profile = ({ user, token }: ProfileProps) => {
       <div className="card p-4 shadow-sm h-100 position-relative">
         <h5 className="fw-bold text-success mb-3">Your Profile</h5>
 
+        {/* Edit button */}
         <button
           className="btn btn-sm btn-outline-success position-absolute top-0 end-0 m-3"
           onClick={() => setIsEditing(!isEditing)}
@@ -131,6 +142,7 @@ const Profile = ({ user, token }: ProfileProps) => {
           {isEditing ? "Cancel" : "Edit"}
         </button>
 
+        {/* Profile photo */}
         <div className="text-center mb-3">
           <img
             className="profile-photo rounded-circle"
@@ -150,6 +162,7 @@ const Profile = ({ user, token }: ProfileProps) => {
           )}
         </div>
 
+        {/* Profile fields */}
         <ul className="list-group list-group-flush">
           {[
             { label: "First Name", key: "first_name" },
@@ -237,11 +250,13 @@ const Profile = ({ user, token }: ProfileProps) => {
             );
           })}
 
+          {/* Role */}
           <li className="list-group-item d-flex justify-content-between align-items-center">
             Role: <span className="badge bg-warning">{formData.role}</span>
           </li>
         </ul>
 
+        {/* Save button */}
         {isEditing && (
           <div className="mt-3 text-end">
             <button className="btn btn-success me-2" onClick={handleSave}>
