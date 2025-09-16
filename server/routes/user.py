@@ -4,55 +4,70 @@ import os
 from db_connections import get_db_connection
 from dotenv import load_dotenv
 from datetime import date, datetime
+from werkzeug.utils import secure_filename
 
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
+
+# ------------------ Upload Folders ------------------
 UPLOAD_FOLDER = "uploads"
-PROFILE_FOLDER = os.path.join(UPLOAD_FOLDER, "profile")
+PROFILE_FOLDER = os.path.abspath(os.path.join(UPLOAD_FOLDER, "profile"))
 os.makedirs(PROFILE_FOLDER, exist_ok=True)
 
 user_bp = Blueprint("user", __name__)
 
-# ------------------ Helper ------------------
+# ------------------ Helpers ------------------
 def format_date(value):
     if isinstance(value, (date, datetime)):
         return value.strftime("%Y-%m-%d")
     return value
 
+def build_photo_url(filename):
+    if not filename:
+        return None
+    # Include blueprint prefix /user in URL
+    return request.host_url.rstrip("/") + f"/user/uploads/profile/{filename}"
+
+def verify_token(auth_header):
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return None, jsonify({"error": "Invalid or missing token"}), 401
+    token = auth_header.split(" ")[1]
+    try:
+        data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        return data, None, None
+    except jwt.ExpiredSignatureError:
+        return None, jsonify({"error": "Token expired"}), 401
+    except jwt.InvalidTokenError:
+        return None, jsonify({"error": "Invalid token"}), 401
+
 # ------------------ Serve Uploaded Files ------------------
 @user_bp.route("/uploads/profile/<filename>")
 def uploaded_profile_file(filename):
+    file_path = os.path.join(PROFILE_FOLDER, filename)
+    if not os.path.exists(file_path):
+        return jsonify({"error": "File not found"}), 404
     return send_from_directory(PROFILE_FOLDER, filename)
 
 # ------------------ Edit User ------------------
 @user_bp.route("/edit/<int:user_id>", methods=["PUT"])
 def edit_user(user_id):
     auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        return jsonify({"error": "Invalid or missing token"}), 401
-
-    token = auth_header.split(" ")[1]
-
-    try:
-        data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-    except jwt.ExpiredSignatureError:
-        return jsonify({"error": "Token expired"}), 401
-    except jwt.InvalidTokenError:
-        return jsonify({"error": "Invalid token"}), 401
+    data, err_response, status = verify_token(auth_header)
+    if err_response:
+        return err_response, status
 
     requester_id = data.get("user_id")
     requester_role = data.get("role")
-
     if requester_role not in ("admin", "presiding_officer") and requester_id != user_id:
         return jsonify({"error": "Forbidden"}), 403
 
     body = request.form.to_dict()
     file = request.files.get("photo")
     if file:
-        filename = f"user_{user_id}_{file.filename}"
+        filename = secure_filename(f"user_{user_id}_{file.filename}")
         file_path = os.path.join(PROFILE_FOLDER, filename)
         file.save(file_path)
-        body["photo"] = f"{request.host_url}uploads/profile/{filename}"  # full URL
+        body["photo"] = filename  # store only filename in DB
 
     fields = [
         "username", "first_name", "last_name", "email",
@@ -99,7 +114,8 @@ def edit_user(user_id):
             "nid": user[8],
             "role": user[9],
             "address_id": user[10],
-            "photo": user[11]
+            "photo": user[11],
+            "photo_url": build_photo_url(user[11])
         }
         return jsonify(updated_user), 200
     except Exception as e:
@@ -113,17 +129,15 @@ def edit_user(user_id):
 @user_bp.route("/current-user", methods=["GET"])
 def current_user():
     auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        return jsonify({"error": "Invalid or missing token"}), 401
+    data, err_response, status = verify_token(auth_header)
+    if err_response:
+        return err_response, status
 
-    token = auth_header.split(" ")[1]
+    user_id = data["user_id"]
 
+    conn = get_db_connection()
+    cursor = conn.cursor()
     try:
-        data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        user_id = data["user_id"]
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
         cursor.execute("""
             SELECT id, username, first_name, last_name, email, phone, gender, 
                    birthdate, nid, role, address_id, photo
@@ -145,14 +159,12 @@ def current_user():
             "nid": user[8],
             "role": user[9],
             "address_id": user[10],
-            "photo": user[11]
+            "photo": user[11],
+            "photo_url": build_photo_url(user[11])
         }), 200
-
-    except jwt.ExpiredSignatureError:
-        return jsonify({"error": "Token expired"}), 401
     except Exception as e:
-        print("JWT error:", e)
-        return jsonify({"error": "Invalid token"}), 401
+        print("Fetch user error:", e)
+        return jsonify({"error": "Failed to fetch user"}), 400
     finally:
-        if "cursor" in locals(): cursor.close()
-        if "conn" in locals(): conn.close()
+        cursor.close()
+        conn.close()
