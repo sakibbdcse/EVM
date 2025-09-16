@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, send_from_directory, current_app
+from flask import Blueprint, request, jsonify, send_from_directory
 import jwt
 import os
 from db_connections import get_db_connection
@@ -8,7 +8,8 @@ from datetime import date, datetime
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
 UPLOAD_FOLDER = "uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+PROFILE_FOLDER = os.path.join(UPLOAD_FOLDER, "profile")
+os.makedirs(PROFILE_FOLDER, exist_ok=True)
 
 user_bp = Blueprint("user", __name__)
 
@@ -19,9 +20,9 @@ def format_date(value):
     return value
 
 # ------------------ Serve Uploaded Files ------------------
-@user_bp.route("/uploads/<filename>")
-def uploaded_file(filename):
-    return send_from_directory(UPLOAD_FOLDER, filename)
+@user_bp.route("/uploads/profile/<filename>")
+def uploaded_profile_file(filename):
+    return send_from_directory(PROFILE_FOLDER, filename)
 
 # ------------------ Edit User ------------------
 @user_bp.route("/edit/<int:user_id>", methods=["PUT"])
@@ -45,15 +46,13 @@ def edit_user(user_id):
     if requester_role not in ("admin", "presiding_officer") and requester_id != user_id:
         return jsonify({"error": "Forbidden"}), 403
 
-    # Get form data
     body = request.form.to_dict()
     file = request.files.get("photo")
     if file:
         filename = f"user_{user_id}_{file.filename}"
-        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        file_path = os.path.join(PROFILE_FOLDER, filename)
         file.save(file_path)
-        # Return full URL for frontend
-        body["photo"] = f"{request.host_url}uploads/{filename}"
+        body["photo"] = f"{request.host_url}uploads/profile/{filename}"  # full URL
 
     fields = [
         "username", "first_name", "last_name", "email",
@@ -79,7 +78,6 @@ def edit_user(user_id):
         cursor.execute(sql, tuple(values))
         conn.commit()
 
-        # Fetch updated user
         cursor.execute("""
             SELECT id, username, first_name, last_name, email, phone, gender, 
                    birthdate, nid, role, address_id, photo
@@ -101,7 +99,7 @@ def edit_user(user_id):
             "nid": user[8],
             "role": user[9],
             "address_id": user[10],
-            "photo": user[11]  # now a full URL
+            "photo": user[11]
         }
         return jsonify(updated_user), 200
     except Exception as e:
