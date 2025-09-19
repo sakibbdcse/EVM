@@ -68,10 +68,7 @@ const Home = () => {
       </div>
 
       <div className="row">
-        {/* Profile Section */}
         <Profile user={user} token={token || ""} />
-        {/* Active Elections */}
-
         <div className="col-md-6 mb-4">
           {user.role === "voter" ? (
             <div className="card p-4 shadow-sm h-100">
