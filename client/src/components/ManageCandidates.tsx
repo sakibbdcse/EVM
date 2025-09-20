@@ -18,6 +18,7 @@ type User = {
   first_name: string;
   last_name: string;
   username: string;
+  profile_photo_url?: string; // from backend
 };
 
 type Election = {
@@ -44,12 +45,14 @@ const ManageCandidates = () => {
   // Fetch candidates
   const fetchCandidates = useCallback(async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/candidates`);
+      const res = await axios.get(`${BASE_URL}/candidates`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setCandidates(res.data);
     } catch (err) {
       console.error("Error fetching candidates:", err);
     }
-  }, []);
+  }, [token]);
 
   // Fetch users
   const fetchUsers = useCallback(async () => {
@@ -67,12 +70,14 @@ const ManageCandidates = () => {
   // Fetch elections
   const fetchElections = useCallback(async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/elections`);
+      const res = await axios.get(`${BASE_URL}/elections`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setElections(res.data);
     } catch (err) {
       console.error("Error fetching elections:", err);
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     fetchCandidates();
@@ -82,9 +87,9 @@ const ManageCandidates = () => {
 
   // Add candidate
   const handleAddCandidate = async () => {
-    setErrorMsg(""); // reset old errors
+    setErrorMsg("");
     if (!formData.user_id || !symbolFile || !formData.election_id) {
-      return setErrorMsg("⚠️ Election, User and Symbol are required.");
+      return setErrorMsg("⚠️ Election, User, and Symbol are required.");
     }
 
     const payload = new FormData();
@@ -128,13 +133,9 @@ const ManageCandidates = () => {
     }
   };
 
-  // Helper: get candidate name from users
-  const getCandidateName = (user_id: number) => {
-    const user = users.find((u) => u.id === user_id);
-    return user
-      ? `${user.first_name} ${user.last_name} (${user.username})`
-      : "Unknown User";
-  };
+  // Helper: get user object for candidate
+  const getCandidateUser = (user_id: number) =>
+    users.find((u) => u.id === user_id);
 
   // Helper: get election name
   const getElectionName = (election_id: number) => {
@@ -159,49 +160,70 @@ const ManageCandidates = () => {
 
       {/* Candidate List */}
       <div className="list-group">
-        {candidates.map((c) => (
-          <div
-            key={c.id}
-            className="list-group-item bg-white shadow-sm mb-2 rounded d-flex justify-content-between align-items-center py-2"
-          >
-            <div className="d-flex align-items-center gap-3">
-              <div>
-                <div className="d-flex align-items-center gap-2 mb-1">
-                  <h6 className="fw-bold mb-0">
-                    {getCandidateName(c.user_id)}
-                  </h6>
-                  {c.symbol_url && (
+        {candidates.map((c) => {
+          const user = getCandidateUser(c.user_id);
+          return (
+            <div
+              key={c.id}
+              className="list-group-item bg-white shadow-sm mb-3 rounded p-3 d-flex align-items-center justify-content-between"
+            >
+              <div className="d-flex align-items-center gap-3">
+                {/* Symbol */}
+                {c.symbol_url && (
+                  <img
+                    src={`${BASE_URL}/${c.symbol_url}`}
+                    alt="Symbol"
+                    className="rounded-circle border"
+                    width={60}
+                    height={60}
+                  />
+                )}
+
+                {/* User Info */}
+                <div className="d-flex align-items-center gap-2">
+                  {user?.profile_photo_url && (
                     <img
-                      src={`${BASE_URL}/${c.symbol_url}`}
-                      alt="Symbol"
+                      src={`${BASE_URL}/${user.profile_photo_url}`}
+                      alt="Profile"
                       className="rounded-circle border"
-                      width={50}
-                      height={50}
+                      width={40}
+                      height={40}
                     />
                   )}
-                </div>
-                <p className="text-muted mb-1">{c.party}</p>
-                <small className="text-secondary fst-italic">{c.slogan}</small>
-                <div>
-                  <small className="badge bg-light text-dark">
-                    {getElectionName(c.election_id)}
-                  </small>
+                  <div>
+                    <h6 className="fw-bold mb-0">
+                      {user
+                        ? `${user.first_name} ${user.last_name} (${user.username})`
+                        : "Unknown User"}
+                    </h6>
+                    <p className="text-muted mb-1">{c.party}</p>
+                    <small className="fst-italic text-secondary">
+                      {c.slogan}
+                    </small>
+                    <div>
+                      <small className="badge bg-success-subtle text-success">
+                        {getElectionName(c.election_id)}
+                      </small>
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              {/* Actions */}
+              <div className="d-flex gap-1">
+                <button className="btn btn-sm btn-outline-primary p-1">
+                  <FaEdit size={14} />
+                </button>
+                <button
+                  className="btn btn-sm btn-outline-danger p-1"
+                  onClick={() => handleDeleteCandidate(c.id)}
+                >
+                  <FaTrash size={14} />
+                </button>
+              </div>
             </div>
-            <div className="d-flex gap-1">
-              <button className="btn btn-sm btn-outline-primary p-1">
-                <FaEdit size={14} />
-              </button>
-              <button
-                className="btn btn-sm btn-outline-danger p-1"
-                onClick={() => handleDeleteCandidate(c.id)}
-              >
-                <FaTrash size={14} />
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Modal */}
@@ -222,7 +244,7 @@ const ManageCandidates = () => {
                   <div className="alert alert-danger py-2">{errorMsg}</div>
                 )}
 
-                {/* Election dropdown */}
+                {/* Election Dropdown */}
                 <select
                   className="form-control mb-2"
                   value={formData.election_id}
@@ -238,7 +260,7 @@ const ManageCandidates = () => {
                   ))}
                 </select>
 
-                {/* Dynamic User Selection */}
+                {/* User Dropdown */}
                 <select
                   className="form-control mb-2"
                   value={formData.user_id}
