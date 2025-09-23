@@ -69,7 +69,6 @@ const Candidate = ({ candidate, token }: CandidateProps) => {
             Vote
           </button>
         </div>
-        {/* Symbol on the right */}
         {candidate.symbol_url && (
           <img
             src={`${BASE_URL}/${candidate.symbol_url}`}
