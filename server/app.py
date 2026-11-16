@@ -20,3 +20,4 @@ app.register_blueprint(candidates_bp)
 # ------------------ Run Server ------------------
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
+# ------------------ Run Server ------------------
