@@ -1,83 +1,146 @@
-import axios from "axios";
-import { useState, useEffect } from "react";
-import { BASE_URL } from "../config/BaseUrl";
+import React from "react";
+import { getImageUrl } from "../config/BaseUrl";
+import { FaCheckCircle, FaVoteYea } from "react-icons/fa";
 
-type CandidateProps = {
-  candidate: {
-    id: number;
-    user_id: number;
-    party: string;
-    slogan: string;
-    symbol_url?: string;
-    votes?: number;
-  };
-  token: string;
-};
-
-type UserType = {
+export type CandidateItem = {
   id: number;
-  first_name: string;
-  last_name: string;
-  username: string;
-  profile_photo_url?: string;
+  election_id: number;
+  user_id: number;
+  name?: string;
+  first_name?: string;
+  last_name?: string;
+  username?: string;
+  party: string;
+  slogan: string;
+  description?: string;
+  symbol?: string;
+  symbol_url?: string;
+  photo?: string;
+  photo_url?: string;
+  votes?: number;
 };
 
-const Candidate = ({ candidate, token }: CandidateProps) => {
-  const [user, setUser] = useState<UserType | null>(null);
+interface CandidateProps {
+  candidate: CandidateItem;
+  hasVoted?: boolean;
+  userVotedCandidateId?: number | null;
+  onVote?: (candidateId: number) => void;
+  isVoting?: boolean;
+  canVote?: boolean;
+}
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await axios.get(`${BASE_URL}/user/${candidate.user_id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setUser(res.data);
-      } catch (err) {
-        console.error("Error fetching user:", err);
-      }
-    };
-    fetchUser();
-  }, [candidate.user_id, token]);
+const Candidate: React.FC<CandidateProps> = ({
+  candidate,
+  hasVoted = false,
+  userVotedCandidateId = null,
+  onVote,
+  isVoting = false,
+  canVote = true,
+}) => {
+  const candidateName =
+    candidate.name ||
+    (candidate.first_name && candidate.last_name
+      ? `${candidate.first_name} ${candidate.last_name}`
+      : "Nominated Candidate");
+
+  const isUserSelection = userVotedCandidateId === candidate.id;
 
   return (
-    <div className="col-12 mb-3">
-      <div className="card candidate-card shadow-sm p-3 d-flex flex-row align-items-center justify-content-between hover-shadow h-100">
-        {/* Candidate Info */}
-        <div className="d-flex flex-column">
-          {user?.profile_photo_url && (
+    <div className="col-md-6 col-lg-4 mb-4">
+      <div
+        className={`card h-100 shadow-sm border-0 position-relative transition-all ${
+          isUserSelection ? "border border-2 border-success bg-success-subtle" : "bg-white"
+        }`}
+      >
+        {isUserSelection && (
+          <span className="position-absolute top-0 end-0 m-2 badge bg-success d-flex align-items-center gap-1 shadow-sm">
+            <FaCheckCircle /> Your Choice
+          </span>
+        )}
+
+        <div className="card-body p-4 d-flex flex-column text-center">
+          {/* Symbol & Candidate Photos */}
+          <div className="d-flex justify-content-center align-items-center gap-3 mb-3">
+            {/* Candidate Photo */}
             <img
-              src={`${BASE_URL}/${user.profile_photo_url}`}
-              alt="Profile"
-              className="candidate-profile rounded-circle mb-2 border"
-              width={60}
-              height={60}
+              src={
+                candidate.photo_url
+                  ? getImageUrl(candidate.photo_url)
+                  : "https://placehold.co/90x90/e2e8f0/475569?text=Candidate"
+              }
+              alt={candidateName}
+              className="rounded-circle border border-2 border-primary shadow-sm"
+              style={{ width: 80, height: 80, objectFit: "cover" }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).src =
+                  "https://placehold.co/90x90/e2e8f0/475569?text=Candidate";
+              }}
             />
+
+            {/* Official Symbol */}
+            {candidate.symbol_url && (
+              <img
+                src={getImageUrl(candidate.symbol_url)}
+                alt={`${candidate.party} Symbol`}
+                className="rounded-circle border border-2 border-warning shadow-sm"
+                style={{ width: 80, height: 80, objectFit: "contain", backgroundColor: "#fff" }}
+                title="Electoral Symbol"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
+              />
+            )}
+          </div>
+
+          <h5 className="fw-bold text-dark mb-1">{candidateName}</h5>
+          <span className="badge bg-primary-subtle text-primary fw-semibold mb-2 mx-auto px-3 py-1">
+            {candidate.party || "Independent"}
+          </span>
+
+          {candidate.slogan && (
+            <p className="fst-italic text-secondary small mb-2">
+              "{candidate.slogan}"
+            </p>
           )}
 
-          <h5 className="fw-bold mb-1 mt-2">
-            {user ? `${user.first_name} ${user.last_name}` : "Unknown User"}
-          </h5>
-          <small className="text-muted mb-1">({user?.username})</small>
+          {candidate.description && (
+            <p className="text-muted small mb-3 text-truncate-2">
+              {candidate.description}
+            </p>
+          )}
 
-          <p className="mb-1 text-primary fw-semibold">{candidate.party}</p>
-          <p className="fst-italic mb-2 text-secondary">"{candidate.slogan}"</p>
-          <p className="mb-0">
-            Votes: <span className="fw-bold">{candidate.votes || 0}</span>
-          </p>
+          <div className="mt-auto pt-2 border-top">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <span className="text-muted small">Recorded Votes:</span>
+              <span className="badge bg-secondary px-2 py-1 fs-6">
+                {candidate.votes ?? 0}
+              </span>
+            </div>
 
-          <button className="btn btn-success btn-sm mt-2 w-50 vote-btn">
-            Vote
-          </button>
+            {canVote && onVote && (
+              <button
+                className={`btn w-100 fw-semibold d-flex align-items-center justify-content-center gap-2 rounded-pill py-2 ${
+                  hasVoted
+                    ? isUserSelection
+                      ? "btn-success disabled"
+                      : "btn-outline-secondary disabled"
+                    : "btn-success"
+                }`}
+                disabled={hasVoted || isVoting}
+                onClick={() => onVote(candidate.id)}
+              >
+                <FaVoteYea />
+                {hasVoted
+                  ? isUserSelection
+                    ? "Voted"
+                    : "Voting Completed"
+                  : isVoting
+                  ? "Casting Vote..."
+                  : "Vote For Candidate"}
+              </button>
+            )}
+          </div>
         </div>
-        {candidate.symbol_url && (
-          <img
-            src={`${BASE_URL}/${candidate.symbol_url}`}
-            alt="Symbol"
-            className="candidate-symbol rounded-circle border ms-3"
-            width={80}
-            height={80}
-          />
-        )}
       </div>
     </div>
   );

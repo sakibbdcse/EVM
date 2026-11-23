@@ -1,11 +1,13 @@
 import axios, { AxiosError } from "axios";
 import { useEffect, useState } from "react";
 import { BASE_URL } from "../config/BaseUrl";
-type dataFetcherProps = {
+
+type DataFetcherProps = {
   endpoint: string;
 };
-function useDataFetcher({ endpoint }: dataFetcherProps) {
-  const [data, setData] = useState([]);
+
+export function useDataFetcher<T = unknown>({ endpoint }: DataFetcherProps) {
+  const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,6 +26,8 @@ function useDataFetcher({ endpoint }: dataFetcherProps) {
     }
     fetchData();
   }, [endpoint]);
+
   return { data, loading, error };
 }
+
 export default useDataFetcher;

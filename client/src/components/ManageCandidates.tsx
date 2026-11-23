@@ -1,83 +1,102 @@
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
-import { FaEdit, FaTrash } from "react-icons/fa";
-import { BASE_URL } from "../config/BaseUrl";
+import { FaTrash, FaPlus, FaCheckCircle, FaExclamationTriangle } from "react-icons/fa";
+import { BASE_URL, getImageUrl } from "../config/BaseUrl";
+import { useSelector } from "react-redux";
+import type { RootState } from "../redux/store";
 
-type Candidate = {
+export type Candidate = {
   id: number;
   election_id: number;
+  election_title?: string;
   user_id: number;
+  name?: string;
+  first_name?: string;
+  last_name?: string;
+  username?: string;
   party: string;
   slogan: string;
+  description?: string;
   symbol?: string;
   symbol_url?: string;
+  photo?: string;
+  photo_url?: string;
+  votes?: number;
 };
 
-type User = {
+type UserOption = {
   id: number;
   first_name: string;
   last_name: string;
   username: string;
-  profile_photo_url?: string; // from backend
+  role: string;
 };
 
-type Election = {
+type ElectionOption = {
   id: number;
   title: string;
+  is_active: boolean;
 };
 
 const ManageCandidates = () => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [elections, setElections] = useState<Election[]>([]);
+  const [users, setUsers] = useState<UserOption[]>([]);
+  const [elections, setElections] = useState<ElectionOption[]>([]);
+  const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
+
   const [formData, setFormData] = useState({
     election_id: "",
     user_id: "",
     party: "",
     slogan: "",
+    description: "",
   });
   const [symbolFile, setSymbolFile] = useState<File | null>(null);
-  const [errorMsg, setErrorMsg] = useState("");
+  const [symbolPreview, setSymbolPreview] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  const token = localStorage.getItem("token");
+  const { token } = useSelector((state: RootState) => state.auth);
+  const activeToken = token || localStorage.getItem("token");
 
   // Fetch candidates
   const fetchCandidates = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await axios.get(`${BASE_URL}/candidates`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${activeToken}` },
       });
       setCandidates(res.data);
     } catch (err) {
       console.error("Error fetching candidates:", err);
+    } finally {
+      setLoading(false);
     }
-  }, [token]);
+  }, [activeToken]);
 
-  // Fetch users
+  // Fetch users for nomination
   const fetchUsers = useCallback(async () => {
-    if (!token) return;
+    if (!activeToken) return;
     try {
       const res = await axios.get(`${BASE_URL}/user/all`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${activeToken}` },
       });
       setUsers(res.data);
     } catch (err) {
       console.error("Error fetching users:", err);
     }
-  }, [token]);
+  }, [activeToken]);
 
   // Fetch elections
   const fetchElections = useCallback(async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/elections`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get(`${BASE_URL}/elections`);
       setElections(res.data);
     } catch (err) {
       console.error("Error fetching elections:", err);
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     fetchCandidates();
@@ -85,11 +104,25 @@ const ManageCandidates = () => {
     fetchElections();
   }, [fetchCandidates, fetchUsers, fetchElections]);
 
-  // Add candidate
-  const handleAddCandidate = async () => {
-    setErrorMsg("");
-    if (!formData.user_id || !symbolFile || !formData.election_id) {
-      return setErrorMsg("⚠️ Election, User, and Symbol are required.");
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setSymbolFile(file);
+    if (file) {
+      setSymbolPreview(URL.createObjectURL(file));
+    } else {
+      setSymbolPreview(null);
+    }
+  };
+
+  // Add Candidate
+  const handleAddCandidate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    if (!formData.election_id || !formData.user_id || !formData.party) {
+      setErrorMsg("Please select an Election, User, and provide Party Name.");
+      return;
     }
 
     const payload = new FormData();
@@ -97,224 +130,297 @@ const ManageCandidates = () => {
     payload.append("user_id", formData.user_id);
     payload.append("party", formData.party);
     payload.append("slogan", formData.slogan);
-    payload.append("symbol", symbolFile);
+    payload.append("description", formData.description);
+    if (symbolFile) {
+      payload.append("symbol", symbolFile);
+    }
 
     try {
-      await axios.post(`${BASE_URL}/candidates`, payload, {
+      const res = await axios.post(`${BASE_URL}/candidates`, payload, {
         headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${activeToken}`,
         },
       });
+
+      setSuccessMsg(res.data.message || "Candidate added successfully!");
       setShowModal(false);
-      setFormData({ election_id: "", user_id: "", party: "", slogan: "" });
+      setFormData({
+        election_id: "",
+        user_id: "",
+        party: "",
+        slogan: "",
+        description: "",
+      });
       setSymbolFile(null);
+      setSymbolPreview(null);
       fetchCandidates();
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
-        setErrorMsg(err.response?.data?.error || "❌ Failed to add candidate.");
+        setErrorMsg(err.response?.data?.error || "Failed to add candidate.");
       } else {
-        setErrorMsg("❌ Unexpected error occurred.");
+        setErrorMsg("Unexpected error occurred.");
       }
-      console.error("Error adding candidate:", err);
     }
   };
 
   // Delete candidate
   const handleDeleteCandidate = async (id: number) => {
-    if (!window.confirm("Delete candidate?")) return;
+    if (!window.confirm("Are you sure you want to remove this candidate? Any votes recorded for them will also be removed.")) {
+      return;
+    }
+
     try {
-      await axios.delete(`${BASE_URL}/candidates/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await axios.delete(`${BASE_URL}/candidates/${id}`, {
+        headers: { Authorization: `Bearer ${activeToken}` },
       });
+      setSuccessMsg(res.data.message || "Candidate removed.");
       fetchCandidates();
-    } catch (err) {
-      console.error("Error deleting candidate:", err);
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        setErrorMsg(err.response?.data?.error || "Failed to delete candidate.");
+      } else {
+        setErrorMsg("Failed to delete candidate.");
+      }
     }
   };
 
-  // Helper: get user object for candidate
-  const getCandidateUser = (user_id: number) =>
-    users.find((u) => u.id === user_id);
-
-  // Helper: get election name
-  const getElectionName = (election_id: number) => {
-    const election = elections.find((e) => e.id === election_id);
-    return election ? election.title : `Election #${election_id}`;
-  };
-
   return (
-    <div className="manage-candidates mt-4">
+    <div className="card shadow-sm border-0 p-4">
       {/* Header */}
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h5 className="fw-bold text-success mb-0">
-          Manage Candidates ({candidates.length})
-        </h5>
+      <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+          <h5 className="fw-bold text-primary mb-0">Candidate Management</h5>
+          <small className="text-muted">Total Nominated Candidates: {candidates.length}</small>
+        </div>
         <button
-          className="btn btn-success fw-semibold"
-          onClick={() => setShowModal(true)}
+          className="btn btn-primary btn-sm d-flex align-items-center gap-1 rounded-pill px-3 py-2 fw-semibold"
+          onClick={() => {
+            setErrorMsg(null);
+            setSuccessMsg(null);
+            setShowModal(true);
+          }}
         >
-          Add Candidate
+          <FaPlus /> Nominate Candidate
         </button>
       </div>
 
+      {successMsg && (
+        <div className="alert alert-success d-flex align-items-center gap-2 py-2 small mb-3">
+          <FaCheckCircle /> {successMsg}
+        </div>
+      )}
+
+      {errorMsg && (
+        <div className="alert alert-danger d-flex align-items-center gap-2 py-2 small mb-3">
+          <FaExclamationTriangle /> {errorMsg}
+        </div>
+      )}
+
       {/* Candidate List */}
-      <div className="list-group">
-        {candidates.map((c) => {
-          const user = getCandidateUser(c.user_id);
-          return (
+      {loading ? (
+        <div className="text-center py-4">
+          <div className="spinner-border text-primary" role="status"></div>
+        </div>
+      ) : candidates.length === 0 ? (
+        <div className="alert alert-light text-center py-4 border">
+          <p className="text-muted mb-0">No candidates nominated yet. Click "Nominate Candidate" to add candidates.</p>
+        </div>
+      ) : (
+        <div className="list-group gap-2">
+          {candidates.map((c) => (
             <div
               key={c.id}
-              className="list-group-item bg-white shadow-sm mb-3 rounded p-3 d-flex align-items-center justify-content-between"
+              className="list-group-item list-group-item-action d-flex align-items-center justify-content-between p-3 rounded-3 border shadow-sm"
             >
               <div className="d-flex align-items-center gap-3">
+                {/* Candidate Avatar */}
+                <img
+                  src={
+                    c.photo_url
+                      ? getImageUrl(c.photo_url)
+                      : "https://placehold.co/50x50/e2e8f0/475569?text=C"
+                  }
+                  alt={c.name || "Candidate"}
+                  className="rounded-circle border"
+                  style={{ width: 50, height: 50, objectFit: "cover" }}
+                />
+
                 {/* Symbol */}
                 {c.symbol_url && (
                   <img
-                    src={`${BASE_URL}/${c.symbol_url}`}
+                    src={getImageUrl(c.symbol_url)}
                     alt="Symbol"
-                    className="rounded-circle border"
-                    width={60}
-                    height={60}
+                    className="rounded-circle border border-warning"
+                    style={{ width: 45, height: 45, objectFit: "contain", backgroundColor: "#fff" }}
+                    title={`Symbol: ${c.party}`}
                   />
                 )}
 
-                {/* User Info */}
-                <div className="d-flex align-items-center gap-2">
-                  {user?.profile_photo_url && (
-                    <img
-                      src={`${BASE_URL}/${user.profile_photo_url}`}
-                      alt="Profile"
-                      className="rounded-circle border"
-                      width={40}
-                      height={40}
-                    />
-                  )}
-                  <div>
-                    <h6 className="fw-bold mb-0">
-                      {user
-                        ? `${user.first_name} ${user.last_name} (${user.username})`
-                        : "Unknown User"}
-                    </h6>
-                    <p className="text-muted mb-1">{c.party}</p>
-                    <small className="fst-italic text-secondary">
-                      {c.slogan}
-                    </small>
-                    <div>
-                      <small className="badge bg-success-subtle text-success">
-                        {getElectionName(c.election_id)}
-                      </small>
-                    </div>
+                <div>
+                  <h6 className="fw-bold mb-0 text-dark">
+                    {c.name || `${c.first_name} ${c.last_name}`}
+                    {c.username && <small className="text-muted fw-normal ms-1">(@{c.username})</small>}
+                  </h6>
+                  <div className="d-flex align-items-center gap-2 my-1">
+                    <span className="badge bg-primary-subtle text-primary fw-semibold">
+                      {c.party || "Independent"}
+                    </span>
+                    <span className="badge bg-light text-secondary border">
+                      {c.election_title || `Election #${c.election_id}`}
+                    </span>
+                    <span className="badge bg-success-subtle text-success">
+                      {c.votes ?? 0} Votes
+                    </span>
                   </div>
+                  {c.slogan && <small className="text-secondary fst-italic d-block">"{c.slogan}"</small>}
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="d-flex gap-1">
-                <button className="btn btn-sm btn-outline-primary p-1">
-                  <FaEdit size={14} />
-                </button>
+              {/* Action Buttons */}
+              <div className="d-flex align-items-center gap-2">
                 <button
-                  className="btn btn-sm btn-outline-danger p-1"
+                  className="btn btn-outline-danger btn-sm p-2 rounded-circle"
+                  title="Delete Candidate"
                   onClick={() => handleDeleteCandidate(c.id)}
                 >
-                  <FaTrash size={14} />
+                  <FaTrash size={13} />
                 </button>
               </div>
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {/* Modal */}
+      {/* Nomination Modal */}
       {showModal && (
-        <div className="modal d-block" tabIndex={-1}>
-          <div className="modal-dialog">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Add Candidate</h5>
+        <div className="modal d-block" tabIndex={-1} style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content shadow-lg border-0 rounded-4">
+              <div className="modal-header border-bottom">
+                <h5 className="modal-title fw-bold text-primary">Nominate New Candidate</h5>
                 <button
                   type="button"
                   className="btn-close"
                   onClick={() => setShowModal(false)}
                 ></button>
               </div>
-              <div className="modal-body">
-                {errorMsg && (
-                  <div className="alert alert-danger py-2">{errorMsg}</div>
-                )}
 
-                {/* Election Dropdown */}
-                <select
-                  className="form-control mb-2"
-                  value={formData.election_id}
-                  onChange={(e) =>
-                    setFormData({ ...formData, election_id: e.target.value })
-                  }
-                >
-                  <option value="">Select Election</option>
-                  {elections.map((el) => (
-                    <option key={el.id} value={el.id}>
-                      {el.title}
-                    </option>
-                  ))}
-                </select>
+              <form onSubmit={handleAddCandidate}>
+                <div className="modal-body">
+                  {errorMsg && (
+                    <div className="alert alert-danger py-2 small mb-3">
+                      <FaExclamationTriangle className="me-1" /> {errorMsg}
+                    </div>
+                  )}
 
-                {/* User Dropdown */}
-                <select
-                  className="form-control mb-2"
-                  value={formData.user_id}
-                  onChange={(e) =>
-                    setFormData({ ...formData, user_id: e.target.value })
-                  }
-                >
-                  <option value="">Select User</option>
-                  {users.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.first_name} {u.last_name} ({u.username})
-                    </option>
-                  ))}
-                </select>
+                  {/* Election Select */}
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold small">Target Election *</label>
+                    <select
+                      className="form-select"
+                      value={formData.election_id}
+                      onChange={(e) => setFormData({ ...formData, election_id: e.target.value })}
+                      required
+                    >
+                      <option value="">-- Choose Election --</option>
+                      {elections.map((el) => (
+                        <option key={el.id} value={el.id}>
+                          {el.title} {el.is_active ? "(Active)" : "(Inactive)"}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                <input
-                  type="text"
-                  className="form-control mb-2"
-                  placeholder="Party"
-                  value={formData.party}
-                  onChange={(e) =>
-                    setFormData({ ...formData, party: e.target.value })
-                  }
-                />
-                <input
-                  type="text"
-                  className="form-control mb-2"
-                  placeholder="Slogan"
-                  value={formData.slogan}
-                  onChange={(e) =>
-                    setFormData({ ...formData, slogan: e.target.value })
-                  }
-                />
-                <input
-                  type="file"
-                  className="form-control mb-2"
-                  accept="image/*"
-                  onChange={(e) => setSymbolFile(e.target.files?.[0] || null)}
-                />
-              </div>
-              <div className="modal-footer">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setShowModal(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="btn btn-success"
-                  onClick={handleAddCandidate}
-                >
-                  Save Candidate
-                </button>
-              </div>
+                  {/* User Select */}
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold small">Registered Citizen / User *</label>
+                    <select
+                      className="form-select"
+                      value={formData.user_id}
+                      onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
+                      required
+                    >
+                      <option value="">-- Choose User --</option>
+                      {users.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.first_name} {u.last_name} (@{u.username}) - {u.role}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Party */}
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold small">Political Party / Affiliation *</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="e.g. Democratic Alliance, Independent"
+                      value={formData.party}
+                      onChange={(e) => setFormData({ ...formData, party: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  {/* Slogan */}
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold small">Campaign Slogan</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="e.g. Integrity, Progress, and Accountability"
+                      value={formData.slogan}
+                      onChange={(e) => setFormData({ ...formData, slogan: e.target.value })}
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold small">Manifesto / Short Bio</label>
+                    <textarea
+                      className="form-control"
+                      rows={2}
+                      placeholder="Brief manifesto or candidate qualifications"
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    />
+                  </div>
+
+                  {/* Symbol Image File */}
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold small">Electoral Symbol (Image)</label>
+                    <input
+                      type="file"
+                      className="form-control"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                    />
+                    {symbolPreview && (
+                      <div className="mt-2 text-center">
+                        <img
+                          src={symbolPreview}
+                          alt="Preview"
+                          className="rounded-circle border p-1"
+                          style={{ width: 60, height: 60, objectFit: "contain" }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="modal-footer border-top">
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary rounded-pill px-3"
+                    onClick={() => setShowModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-primary rounded-pill px-4 fw-semibold">
+                    Confirm Nomination
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

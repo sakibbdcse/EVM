@@ -1,240 +1,321 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import axios, { AxiosError } from "axios";
 import { BASE_URL } from "../config/BaseUrl";
-import { useNavigate } from "react-router-dom";
-// Main form data type (excluding confirm password)
-interface FormData {
-  email: string;
-  firstName: string;
-  lastName: string;
-  username: string;
-  phone: string;
-  gender: string;
-  nid: string;
-  birthdate: string;
-  password: string;
-}
+import { FaUserPlus, FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
 
-// Separate type for password + confirm
-interface PasswordInput {
-  password: string;
-  confirm: string;
+interface Address {
+  id: number;
+  division: string;
+  district: string;
+  city?: string;
+  village?: string;
 }
 
 const Register = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState<FormData>({
+
+  const [formData, setFormData] = useState({
+    username: "",
     email: "",
     firstName: "",
     lastName: "",
-    username: "",
     phone: "",
-    gender: "",
+    gender: "Male",
     nid: "",
     birthdate: "",
+    address_id: "",
     password: "",
+    confirmPassword: "",
   });
 
-  const [passwordInput, setPasswordInput] = useState<PasswordInput>({
-    password: "",
-    confirm: "",
-  });
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/addresses`);
+        setAddresses(res.data);
+      } catch (err) {
+        console.error("Failed to load addresses:", err);
+      }
+    };
+    fetchAddresses();
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-
-    if (name === "password" || name === "confirmPassword") {
-      setPasswordInput((prev) => ({
-        ...prev,
-        [name === "password" ? "password" : "confirm"]: value,
-      }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError(null);
+    setSuccess(null);
 
-    if (passwordInput.password !== passwordInput.confirm) {
-      alert("Passwords do not match!");
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match.");
       return;
     }
 
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return;
+    }
+
+    if (!formData.nid.trim()) {
+      setError("National ID (NID) is mandatory for voter registration.");
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      const submitData = { ...formData, password: passwordInput.password };
+      const payload = {
+        username: formData.username.trim(),
+        email: formData.email.trim(),
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        phone: formData.phone.trim(),
+        gender: formData.gender,
+        nid: formData.nid.trim(),
+        birthdate: formData.birthdate || null,
+        address_id: formData.address_id ? Number(formData.address_id) : null,
+        password: formData.password,
+      };
 
-      const response = await axios.post(
-        `${BASE_URL}/auth/register`,
-        submitData
-      );
+      const res = await axios.post(`${BASE_URL}/auth/register`, payload);
+      setSuccess(res.data.message || "Registration successful! Redirecting to login...");
 
-      alert(response.data.message || "Registration successful!");
-      console.log("✅ User registered:", response.data);
-      navigate("/login");
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError<{ error: string }>;
-        alert(axiosError.response?.data?.error || axiosError.message);
-        console.error("❌ Registration failed:", axiosError);
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const axiosError = err as AxiosError<{ error: string }>;
+        setError(axiosError.response?.data?.error || "Registration failed.");
       } else {
-        console.error(error);
-        alert("Something went wrong!");
+        setError("Network error occurred.");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="bg-light d-flex align-items-center justify-content-center min-vh-100">
-      <div className="auth-card mx-auto">
-        <div className="card p-5 shadow-sm text-center">
-          <h2 className="h3 fw-bold mb-4">Create Your Account</h2>
+    <div className="min-vh-100 bg-light d-flex align-items-center justify-content-center py-5 px-3">
+      <div className="card shadow-lg border-0 rounded-4 overflow-hidden" style={{ maxWidth: 640, width: "100%" }}>
+        {/* Header */}
+        <div className="bg-primary bg-gradient p-4 text-white text-center">
+          <FaUserPlus className="fs-1 mb-2" />
+          <h3 className="fw-bold mb-1">Citizen Voter Registration</h3>
+          <p className="text-white-50 small mb-0">
+            Register your biometric & national identification to participate in electronic voting
+          </p>
+        </div>
+
+        <div className="card-body p-4 p-sm-5">
+          {error && (
+            <div className="alert alert-danger d-flex align-items-center gap-2 py-2 small mb-4">
+              <FaExclamationCircle className="flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {success && (
+            <div className="alert alert-success d-flex align-items-center gap-2 py-2 small mb-4">
+              <FaCheckCircle className="flex-shrink-0" />
+              <span>{success}</span>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="form-control"
-                placeholder="Email address"
-                required
-              />
-            </div>
-
+            {/* Names */}
             <div className="row g-3 mb-3">
               <div className="col-md-6">
+                <label className="form-label small fw-semibold text-muted">First Name *</label>
                 <input
                   type="text"
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleChange}
                   className="form-control"
-                  placeholder="First Name"
+                  placeholder="e.g. John"
                   required
                 />
               </div>
               <div className="col-md-6">
+                <label className="form-label small fw-semibold text-muted">Last Name *</label>
                 <input
                   type="text"
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleChange}
                   className="form-control"
-                  placeholder="Last Name"
+                  placeholder="e.g. Doe"
                   required
                 />
               </div>
             </div>
 
+            {/* Username & Email */}
             <div className="row g-3 mb-3">
               <div className="col-md-6">
+                <label className="form-label small fw-semibold text-muted">Username *</label>
                 <input
                   type="text"
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
                   className="form-control"
-                  placeholder="Username"
+                  placeholder="Choose unique username"
                   required
                 />
               </div>
               <div className="col-md-6">
+                <label className="form-label small fw-semibold text-muted">Email Address *</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="form-control"
+                  placeholder="voter@example.com"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Phone & NID */}
+            <div className="row g-3 mb-3">
+              <div className="col-md-6">
+                <label className="form-label small fw-semibold text-muted">Mobile Phone *</label>
                 <input
                   type="tel"
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
                   className="form-control"
-                  placeholder="Phone Number"
+                  placeholder="e.g. 01700000000"
+                  required
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label small fw-semibold text-muted">National ID (NID) *</label>
+                <input
+                  type="text"
+                  name="nid"
+                  value={formData.nid}
+                  onChange={handleChange}
+                  className="form-control"
+                  placeholder="Unique Voter NID"
                   required
                 />
               </div>
             </div>
 
+            {/* Gender & Birthdate */}
             <div className="row g-3 mb-3">
               <div className="col-md-6">
+                <label className="form-label small fw-semibold text-muted">Gender</label>
                 <select
-                  className="form-select"
                   name="gender"
                   value={formData.gender}
                   onChange={handleChange}
-                  required
+                  className="form-select"
                 >
-                  <option value="" disabled>
-                    Select Gender
-                  </option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
                 </select>
               </div>
               <div className="col-md-6">
+                <label className="form-label small fw-semibold text-muted">Date of Birth</label>
                 <input
                   type="date"
                   name="birthdate"
                   value={formData.birthdate}
                   onChange={handleChange}
                   className="form-control"
-                  placeholder="Date of Birth"
+                />
+              </div>
+            </div>
+
+            {/* Constituency Address */}
+            <div className="mb-3">
+              <label className="form-label small fw-semibold text-muted">Voting Constituency / Address</label>
+              <select
+                name="address_id"
+                value={formData.address_id}
+                onChange={handleChange}
+                className="form-select"
+              >
+                <option value="">-- Select Your Voting Area --</option>
+                {addresses.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.division} - {a.district} {a.city ? `(${a.city})` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Passwords */}
+            <div className="row g-3 mb-4">
+              <div className="col-md-6">
+                <label className="form-label small fw-semibold text-muted">Password *</label>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="form-control"
+                  placeholder="Min 6 characters"
+                  required
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label small fw-semibold text-muted">Confirm Password *</label>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className="form-control"
+                  placeholder="Re-type password"
                   required
                 />
               </div>
             </div>
-            <div className="mb-3">
-              <input
-                type="text"
-                name="nid"
-                value={formData.nid}
-                onChange={handleChange}
-                className="form-control"
-                placeholder="NID"
-                required
-              />
-            </div>
 
-            <div className="mb-3">
-              <input
-                type="password"
-                name="password"
-                value={passwordInput.password}
-                onChange={handleChange}
-                className="form-control"
-                placeholder="Password"
-                required
-              />
-            </div>
-            <div className="mb-3">
-              <input
-                type="password"
-                name="confirmPassword"
-                value={passwordInput.confirm}
-                onChange={handleChange}
-                className="form-control"
-                placeholder="Confirm Password"
-                required
-              />
-            </div>
-
-            <button type="submit" className="btn btn-custom-green btn-lg w-100">
-              Register
+            <button
+              type="submit"
+              className="btn btn-primary w-100 py-2 rounded-pill fw-semibold shadow-sm"
+              disabled={loading}
+            >
+              {loading ? (
+                <span className="d-flex align-items-center justify-content-center gap-2">
+                  <span className="spinner-border spinner-border-sm" role="status"></span>
+                  Submitting Registration...
+                </span>
+              ) : (
+                "Complete Voter Registration"
+              )}
             </button>
           </form>
 
-          <hr className="my-4" />
-          <p className="text-muted">
-            Already have an account?{" "}
-            <Link
-              to="/login" // ✅ make sure route matches your router
-              className="text-primary text-decoration-none fw-semibold"
-            >
-              Log in
-            </Link>
-          </p>
+          <div className="text-center mt-4">
+            <p className="text-muted small mb-0">
+              Already registered?{" "}
+              <Link to="/login" className="text-primary text-decoration-none fw-semibold">
+                Sign in to your account
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>
