@@ -1,259 +1,92 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+
+:root {
+  --primary-color: #0d6efd;
+  --success-color: #198754;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --font-family-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
 
 body {
-  font-family: "Inter", sans-serif;
-  background-color: #f1f5f9; /* Tailwind's gray-100 */
-  color: #1a202c;
+  font-family: var(--font-family-sans);
+  background-color: #f8fafc;
+  color: #1e293b;
   line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
-.container {
-  max-width: 960px;
-}
-
+/* Card Styling */
 .card {
   border-radius: 1rem;
-  transition: transform 0.2s, box-shadow 0.2s;
   border: none;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  background-color: #ffffff;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card.shadow-sm {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.07), 0 1px 2px -1px rgba(0, 0, 0, 0.05) !important;
 }
 
 .card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05) !important;
 }
 
-.btn-custom-blue {
-  background-color: #3b82f6; /* Tailwind's blue-500 */
-  color: white;
-  border-radius: 0.75rem;
-  padding: 0.75rem 1.5rem;
-  font-weight: 600;
-  transition: background-color 0.2s;
+/* Rounded pills and buttons */
+.btn {
+  font-weight: 500;
+  transition: all 0.15s ease-in-out;
 }
 
-.btn-custom-blue:hover {
-  background-color: #2563eb; /* Tailwind's blue-600 */
+.btn:active {
+  transform: scale(0.98);
 }
 
-.btn-custom-green {
-  background-color: #22c55e; /* Tailwind's green-500 */
-  color: white;
-  border-radius: 0.75rem;
-  padding: 0.75rem 1.5rem;
-  font-weight: 600;
-  transition: background-color 0.2s;
+.rounded-4 {
+  border-radius: 1.25rem !important;
 }
 
-.btn-custom-green:hover {
-  background-color: #16a34a; /* Tailwind's green-600 */
+/* Inputs */
+.form-control, .form-select {
+  border-radius: 0.65rem;
+  border: 1px solid #cbd5e1;
+  padding: 0.55rem 0.85rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
-.btn-custom-purple {
-  background-color: #8b5cf6; /* Tailwind's purple-500 */
-  color: white;
-  border-radius: 0.75rem;
-  padding: 0.75rem 1.5rem;
-  font-weight: 600;
-  transition: background-color 0.2s;
+.form-control:focus, .form-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
-.btn-custom-purple:hover {
-  background-color: #7c3aed; /* Tailwind's purple-600 */
+/* Navbar */
+.navbar {
+  transition: all 0.2s ease;
 }
 
-.fade-in {
-  animation: fadeIn 0.5s ease-in-out;
+.nav-link {
+  transition: color 0.15s ease;
 }
 
-.loader {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #3b82f6;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
+.nav-link:hover {
+  color: var(--primary-color) !important;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+/* Transitions */
+.transition-all {
+  transition: all 0.2s ease-in-out;
 }
 
-@keyframes spin {
+/* Spin animation for icons */
+.fa-spin {
+  animation: fa-spin 1.5s infinite linear;
+}
+
+@keyframes fa-spin {
   0% {
     transform: rotate(0deg);
   }
   100% {
-    transform: rotate(360deg);
-  }
-}
-
-/* register */
-.auth-card {
-  max-width: 450px;
-}
-
-.card {
-  border-radius: 1rem;
-  transition: transform 0.2s, box-shadow 0.2s;
-  border: none;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
-.btn-custom-green {
-  background-color: #22c55e; /* Tailwind's green-500 */
-  color: white;
-  border-radius: 0.75rem;
-  padding: 0.75rem 1.5rem;
-  font-weight: 600;
-  transition: background-color 0.2s;
-}
-
-.btn-custom-green:hover {
-  background-color: #16a34a; /* Tailwind's green-600 */
-}
-
-/* Login css */
-
-/* voter dashboard  */
-.btn-custom-danger:hover {
-  background-color: #c82333; /* A darker shade on hover */
-}
-
-.btn-custom-green {
-  background-color: #22c55e;
-  color: white;
-  border-radius: 0.75rem;
-  padding: 0.5rem 1rem;
-  font-weight: 600;
-  transition: background-color 0.2s;
-}
-
-.btn-custom-green:hover {
-  background-color: #16a34a;
-}
-
-.card {
-  border-radius: 1.5rem;
-  transition: transform 0.2s, box-shadow 0.2s;
-  border: none;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
-.candidate-card {
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.candidate-card:hover {
-  transform: translateY(-5px);
-}
-
-.disabled-vote {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.profile-photo {
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 4px solid #fff;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-.candidate-photo {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-bottom: 0.5rem;
-}
-
-@media (max-width: 768px) {
-  .candidate-card {
-    margin-bottom: 1.5rem;
-  }
-}
-
-/* presiding officer dashboard */
-.btn-custom-primary {
-  background-color: #3b82f6; /* A professional blue */
-  color: white;
-  border-radius: 0.75rem;
-  padding: 0.5rem 1rem;
-  font-weight: 600;
-  transition: background-color 0.2s ease-in-out;
-  border: none;
-}
-
-.btn-custom-primary:hover {
-  background-color: #2563eb; /* Darker blue on hover */
-}
-
-.btn-custom-danger {
-  background-color: #ef4444; /* A vibrant red */
-  color: white;
-  border-radius: 0.75rem;
-  padding: 0.5rem 1rem;
-  font-weight: 600;
-  transition: background-color 0.2s ease-in-out;
-  border: none;
-}
-
-.btn-custom-danger:hover {
-  background-color: #dc2626; /* Darker red on hover */
-}
-
-.card {
-  border-radius: 1.5rem;
-  border: none;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s ease-in-out;
-  background-color: #ffffff;
-}
-
-.card:hover {
-  transform: translateY(-4px);
-}
-
-.candidate-photo {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-right: 1.5rem;
-  border: 3px solid #3b82f6;
-}
-
-.form-control {
-  border-radius: 0.75rem;
-  border: 1px solid #d1d5db;
-}
-
-/* Responsive design adjustments */
-@media (max-width: 768px) {
-  .candidate-photo {
-    width: 60px;
-    height: 60px;
-    margin-right: 1rem;
+    transform: rotate(359deg);
   }
 }

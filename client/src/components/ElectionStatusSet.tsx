@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-import type { ChangeEvent, FormEvent } from "react";
+import type { FormEvent } from "react";
 import axios from "axios";
 import { BASE_URL } from "../config/BaseUrl";
-import ElectionStatus from "./ElectionStatus";
+import { useSelector } from "react-redux";
+import type { RootState } from "../redux/store";
+import { FaPlusCircle, FaCheckCircle, FaExclamationTriangle } from "react-icons/fa";
 
 interface Address {
   id: number;
@@ -10,165 +12,210 @@ interface Address {
   district: string;
   city?: string;
   village?: string;
-  other_address_details?: string;
 }
 
-const ElectionStatusSet = () => {
+interface ElectionStatusSetProps {
+  onElectionSaved?: () => void;
+}
+
+const ElectionStatusSet: React.FC<ElectionStatusSetProps> = ({ onElectionSaved }) => {
   const [title, setTitle] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
-  const [isActive, setIsActive] = useState<boolean>(false);
-  const [statusMessage, setStatusMessage] = useState<string>("");
+  const [isActive, setIsActive] = useState<boolean>(true);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const { token } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
     const fetchAddresses = async () => {
       try {
         const response = await axios.get<Address[]>(`${BASE_URL}/addresses`);
         setAddresses(response.data);
+        if (response.data.length > 0) {
+          setSelectedAddress(String(response.data[0].id));
+        }
       } catch (error) {
         console.error("Error fetching addresses:", error);
       }
     };
-
     fetchAddresses();
   }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setStatusMessage(null);
+    setErrorMessage(null);
 
-    if (!selectedAddress || !title) {
-      setStatusMessage("Please fill all required fields");
+    if (!selectedAddress || !title || !startDate || !endDate) {
+      setErrorMessage("Please fill all required fields.");
       return;
     }
 
-    try {
-      const response = await axios.post(`${BASE_URL}/elections`, {
-        title,
-        address_id: selectedAddress,
-        start_date: startDate,
-        end_date: endDate,
-        is_active: isActive ? 1 : 0,
-      });
+    if (new Date(startDate) >= new Date(endDate)) {
+      setErrorMessage("End date & time must be after the start date.");
+      return;
+    }
 
-      setStatusMessage(response.data.message || "Election saved successfully");
+    setLoading(true);
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/elections`,
+        {
+          title,
+          description,
+          address_id: Number(selectedAddress),
+          start_date: startDate,
+          end_date: endDate,
+          is_active: isActive ? 1 : 0,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token || localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      setStatusMessage(response.data.message || "Election created successfully!");
+      setTitle("");
+      setDescription("");
+      setStartDate("");
+      setEndDate("");
+      if (onElectionSaved) onElectionSaved();
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
-        setStatusMessage(
-          error.response?.data?.error || "Something went wrong!"
-        );
+        setErrorMessage(error.response?.data?.error || "Failed to create election.");
       } else {
-        setStatusMessage("Something went wrong!");
+        setErrorMessage("An unexpected error occurred.");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleAddressChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    setSelectedAddress(e.target.value);
-  };
-
   return (
-    <>
-      <div className="col-md-6">
-        <ElectionStatus />
+    <div className="card shadow-sm border-0 p-4">
+      <div className="d-flex align-items-center gap-2 mb-3 text-primary">
+        <FaPlusCircle className="fs-5" />
+        <h5 className="fw-bold mb-0">Create New Election</h5>
       </div>
+      <p className="text-muted small mb-3">
+        Configure election scheduling, geographic constituency boundaries, and voting operational status.
+      </p>
 
-      <div className="col-md-6">
-        <div className="card p-5 h-100">
-          <h5 className="fw-bold text-primary mb-4">Set Election Details</h5>
-          <form onSubmit={handleSubmit}>
-            {/* Election Title */}
-            <div className="mb-4">
-              <label className="form-label fw-medium">Election Title</label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Enter election name"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-              />
-            </div>
-
-            {/* Start Date */}
-            <div className="mb-4">
-              <label className="form-label fw-medium">
-                Election Start Date & Time
-              </label>
-              <input
-                type="datetime-local"
-                className="form-control"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                required
-              />
-            </div>
-
-            {/* End Date */}
-            <div className="mb-4">
-              <label className="form-label fw-medium">
-                Election End Date & Time
-              </label>
-              <input
-                type="datetime-local"
-                className="form-control"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                required
-              />
-            </div>
-
-            {/* Address Dropdown */}
-            <div className="mb-4">
-              <label className="form-label fw-medium">Select Address</label>
-              <select
-                className="form-select"
-                value={selectedAddress}
-                onChange={handleAddressChange}
-                required
-              >
-                <option value="">-- Select Address --</option>
-                {addresses.map((addr) => (
-                  <option key={addr.id} value={addr.id}>
-                    {addr.division}, {addr.district}
-                    {addr.city ? `, ${addr.city}` : ""}
-                    {addr.village ? `, ${addr.village}` : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Active Checkbox */}
-            <div className="form-check mb-4">
-              <input
-                type="checkbox"
-                className="form-check-input"
-                id="isActive"
-                checked={isActive}
-                onChange={(e) => setIsActive(e.target.checked)}
-              />
-              <label htmlFor="isActive" className="form-check-label">
-                Set as Active Election
-              </label>
-            </div>
-
-            {/* Save Button */}
-            <div className="d-grid">
-              <button type="submit" className="btn btn-custom-primary">
-                Save Details
-              </button>
-            </div>
-          </form>
-
-          {statusMessage && (
-            <p className="mt-3 text-center fw-bold text-success">
-              {statusMessage}
-            </p>
-          )}
+      {statusMessage && (
+        <div className="alert alert-success d-flex align-items-center gap-2 py-2 small mb-3">
+          <FaCheckCircle /> {statusMessage}
         </div>
-      </div>
-    </>
+      )}
+
+      {errorMessage && (
+        <div className="alert alert-danger d-flex align-items-center gap-2 py-2 small mb-3">
+          <FaExclamationTriangle /> {errorMessage}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit}>
+        {/* Title */}
+        <div className="mb-3">
+          <label className="form-label fw-semibold small">Election Title *</label>
+          <input
+            type="text"
+            className="form-control"
+            placeholder="e.g. National General Election 2026"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+          />
+        </div>
+
+        {/* Description */}
+        <div className="mb-3">
+          <label className="form-label fw-semibold small">Description / Guidelines</label>
+          <textarea
+            className="form-control"
+            rows={2}
+            placeholder="Instructions, eligibility guidelines, or general constituency details"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </div>
+
+        <div className="row g-2 mb-3">
+          {/* Start Date */}
+          <div className="col-md-6">
+            <label className="form-label fw-semibold small">Start Date & Time *</label>
+            <input
+              type="datetime-local"
+              className="form-control"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              required
+            />
+          </div>
+
+          {/* End Date */}
+          <div className="col-md-6">
+            <label className="form-label fw-semibold small">End Date & Time *</label>
+            <input
+              type="datetime-local"
+              className="form-control"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              required
+            />
+          </div>
+        </div>
+
+        {/* Address Dropdown */}
+        <div className="mb-3">
+          <label className="form-label fw-semibold small">Constituency / Address Location *</label>
+          <select
+            className="form-select"
+            value={selectedAddress}
+            onChange={(e) => setSelectedAddress(e.target.value)}
+            required
+          >
+            <option value="">-- Select Constituency Area --</option>
+            {addresses.map((addr) => (
+              <option key={addr.id} value={addr.id}>
+                {addr.division} - {addr.district}
+                {addr.city ? `, ${addr.city}` : ""}
+                {addr.village ? `, ${addr.village}` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Active Toggle */}
+        <div className="form-check form-switch mb-3">
+          <input
+            type="checkbox"
+            className="form-check-input"
+            id="isActiveSwitch"
+            checked={isActive}
+            onChange={(e) => setIsActive(e.target.checked)}
+          />
+          <label htmlFor="isActiveSwitch" className="form-check-label fw-medium small">
+            Set as Active Election (Immediately Open for Voting)
+          </label>
+        </div>
+
+        <button
+          type="submit"
+          className="btn btn-primary w-100 fw-semibold rounded-pill py-2"
+          disabled={loading}
+        >
+          {loading ? "Saving Election..." : "Save & Publish Election"}
+        </button>
+      </form>
+    </div>
   );
 };
 
